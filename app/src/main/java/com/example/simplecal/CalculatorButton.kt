@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun CalculatorButton(
@@ -14,11 +15,17 @@ fun CalculatorButton(
     modifier: Modifier,
     onClick: () -> Unit
 ) {
-    val box = Box(
+    Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .clip(CircleShape)
             .clickable { onClick() }
             .then(modifier)
-    )
+    ) {
+        Text(
+            text = symbol,
+            fontSize = 36.sp,
+            color = Color.White
+        )
+    }
 }
