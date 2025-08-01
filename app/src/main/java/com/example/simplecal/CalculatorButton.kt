@@ -25,12 +25,9 @@ fun CalculatorButton(
             .then(modifier)
     ) {
         Text(
-            text = symbol,
+            text = Symbol,
             fontSize = 36.sp,
             color = Color.White
         )
-        {
-
-        }
     }
 }
