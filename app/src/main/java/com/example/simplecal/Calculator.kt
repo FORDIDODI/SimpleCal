@@ -19,6 +19,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import com.example.simplecal.ui.theme.LightGray
 import com.example.simplecal.ui.theme.Orange
 
@@ -26,6 +28,7 @@ import com.example.simplecal.ui.theme.Orange
 
 fun Calculator(
     state: CalculatorState,
+    history: List<String>,
     buttonSpacing: Dp = 8.dp,
     modifier: Modifier = Modifier,
     onAction: (CalculatorAction) -> Unit
@@ -38,6 +41,23 @@ fun Calculator(
                 .align(Alignment.BottomCenter),
             verticalArrangement = Arrangement.spacedBy(buttonSpacing)
         ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                reverseLayout = true
+            ) {
+                items(history) { entry ->
+                    Text(
+                        text = entry,
+                        color = Color.LightGray,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(vertical = 2.dp)
+                    )
+
+                }
+            }
+
             Text(
                 text = state.number1 + (state.operation?.symbol ?: "") + state.number2,
                 textAlign = TextAlign.End,

@@ -10,6 +10,8 @@ class CalculatorViewModel: ViewModel() {
     var state by mutableStateOf(CalculatorState())
         private set
 
+    val history = mutableStateOf<List<String>>(emptyList())
+
     fun onAction(action: CalculatorAction) {
         when(action) {
             is CalculatorAction.Number -> enterNumber(action.number)
@@ -53,6 +55,8 @@ class CalculatorViewModel: ViewModel() {
             is CalculatorOperation.Divide -> number1 / number2
             null -> return
         }
+            val expression = "${state.number1} ${state.operation?.symbol} ${state.number2} = ${result.toString().take(15)}"
+            history.value = listOf(expression) + history.value.take(9)
             state = state.copy(
                 number1 = result.toString().take(15),
                 number2 = "",
