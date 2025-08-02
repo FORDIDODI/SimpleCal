@@ -20,6 +20,7 @@ class CalculatorViewModel: ViewModel() {
             is CalculatorAction.Operation -> enterOperation(action.operation)
             is CalculatorAction.Calculate -> performCalculation()
             is CalculatorAction.Delete -> performDeletion()
+            is CalculatorAction.Percent -> applyPercent()
 
         }
     }
@@ -102,6 +103,20 @@ class CalculatorViewModel: ViewModel() {
         state = state.copy(
             number2 = state.number2 + number
         )
+    }
+
+    private fun applyPercent() {
+        if (state.operation == null) {
+            val num1 = state.number1.toDoubleOrNull()
+            if (num1 != null) {
+                state = state.copy(number1 = (num1 / 100).toString())
+            }
+        } else {
+            val num2 = state.number2.toDoubleOrNull()
+            if (num2 != null) {
+                state =state.copy(number2 = (num2 / 100).toString())
+            }
+        }
     }
 
     companion object {

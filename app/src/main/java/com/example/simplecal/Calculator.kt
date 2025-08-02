@@ -75,13 +75,23 @@ fun Calculator(
             )
             {
                 CalculatorButton(
-                    Symbol = "AC",
+                    Symbol = "C",
                     modifier = Modifier
                         .background(LightGray)
-                        .aspectRatio(2f)
-                        .weight(2f),
+                        .aspectRatio(1f)
+                        .weight(1f),
                     onClick = {
                         onAction(CalculatorAction.Clear)
+                    }
+                )
+                CalculatorButton(
+                    Symbol = "%",
+                    modifier = Modifier
+                        .background(Orange)
+                        .aspectRatio(1f)
+                        .weight(1f),
+                    onClick = {
+                        onAction(CalculatorAction.Percent)
                     }
                 )
                 CalculatorButton(
