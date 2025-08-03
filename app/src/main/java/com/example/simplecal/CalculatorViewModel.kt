@@ -21,6 +21,7 @@ class CalculatorViewModel: ViewModel() {
             is CalculatorAction.Calculate -> performCalculation()
             is CalculatorAction.Delete -> performDeletion()
             is CalculatorAction.Percent -> applyPercent()
+            is CalculatorAction.ToggleSign -> toggleSign()
 
         }
     }
@@ -115,6 +116,22 @@ class CalculatorViewModel: ViewModel() {
             val num2 = state.number2.toDoubleOrNull()
             if (num2 != null) {
                 state =state.copy(number2 = (num2 / 100).toString())
+            }
+        }
+    }
+
+    private fun toggleSign() {
+        if (state.operation == null) {
+            val num1 = state.number1.toDoubleOrNull()
+            if (num1 != null) {
+                val toggled = -num1
+                state = state.copy(number1 = toggled.toString().removeSuffix(".0"))
+            }
+        } else {
+            val num2 = state.number2.toDoubleOrNull()
+            if (num2 != null) {
+                val toggled = -num2
+                state = state.copy(number2 = toggled.toString().removeSuffix(".0"))
             }
         }
     }

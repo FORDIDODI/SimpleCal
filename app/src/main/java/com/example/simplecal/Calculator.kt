@@ -258,11 +258,22 @@ fun Calculator(
             )
             {
                 CalculatorButton(
+                    Symbol = "±",
+                    modifier = Modifier
+                        .background(Color.DarkGray)
+                        .aspectRatio(1f)
+                        .weight(1f),
+                    onClick = {
+                        onAction(CalculatorAction.ToggleSign)
+                    }
+                )
+
+                CalculatorButton(
                     Symbol = "0",
                     modifier = Modifier
                         .background(Color.DarkGray)
-                        .aspectRatio(2f)
-                        .weight(2f),
+                        .aspectRatio(1f)
+                        .weight(1f),
                     onClick = {
                         onAction(CalculatorAction.Number(0))
                     }
