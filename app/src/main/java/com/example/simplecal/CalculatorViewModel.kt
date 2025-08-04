@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import kotlin.math.sqrt
 
 class CalculatorViewModel: ViewModel() {
 
@@ -22,6 +23,10 @@ class CalculatorViewModel: ViewModel() {
             is CalculatorAction.Delete -> performDeletion()
             is CalculatorAction.Percent -> applyPercent()
             is CalculatorAction.ToggleSign -> toggleSign()
+            is CalculatorAction.Sqrt -> applySqrt()
+            is CalculatorAction.Square -> applySquare()
+            is CalculatorAction.Reciprocal -> applyReciprocal()
+            is CalculatorAction.NumberPi -> enterPi()
 
         }
     }
@@ -58,7 +63,7 @@ class CalculatorViewModel: ViewModel() {
             is CalculatorAction.Sqrt -> applySqrt()
             is CalculatorAction.Square -> applySquare()
             is CalculatorAction.Reciprocal -> applyReciprocal()
-            is CalculatorAction.NumberPi -> enterNumberPi()
+            is CalculatorAction.NumberPi -> enterPi()
 
             null -> return
         }
@@ -139,6 +144,35 @@ class CalculatorViewModel: ViewModel() {
                 state = state.copy(number2 = toggled.toString().removeSuffix(".0"))
             }
         }
+    }
+
+    private fun applySqrt() {
+        val number = state.number1.toDoubleOrNull()
+        if (number != null && number >= 0) {
+            val result = sqrt(number)
+            state = state.copy(number1 = result.toString().take(15), number2 = "", operation = null)
+        }
+    }
+
+    private fun applySquare() {
+        val number = state.number1.toDoubleOrNull()
+        if (number != null) {
+            val result = number * number
+            state = state.copy(number1 = result.toString().take(15), number2 = "", operation = null)
+        }
+    }
+
+    private fun applyReciprocal() {
+        val number = state.number1.toDoubleOrNull()
+        if (number != null && number != 0.0) {
+            val result = 1 / number
+            state = state.copy(number1 = result.toString().take(15), number2 = "", operation = null)
+        }
+    }
+
+    private fun enterPi() {
+        val piValue = Math.PI.toString().take(15)
+        state = state.copy(number1 = piValue, number2 = "", operation = null)
     }
 
     companion object {

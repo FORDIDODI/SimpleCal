@@ -26,9 +26,9 @@ fun CalculatorScientificLayout(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ScientificButton("√", onClick = { /* belum di-implement */ })
-            ScientificButton("x²", onClick = { /* belum di-implement */ })
-            ScientificButton("1/x", onClick = { /* belum di-implement */ })
+            ScientificButton("√", onClick = {onAction(CalculatorAction.Sqrt)})
+            ScientificButton("x²", onClick = {onAction(CalculatorAction.Square)})
+            ScientificButton("1/x", onClick = {onAction(CalculatorAction.Reciprocal)})
             ScientificButton("π", onClick = { onAction(CalculatorAction.NumberPi) })
             // Tambah lagi sesuai keinginan
         }
