@@ -55,6 +55,11 @@ class CalculatorViewModel: ViewModel() {
             is CalculatorOperation.Subtract -> number1 - number2
             is CalculatorOperation.Multiply -> number1 * number2
             is CalculatorOperation.Divide -> number1 / number2
+            is CalculatorAction.Sqrt -> applySqrt()
+            is CalculatorAction.Square -> applySquare()
+            is CalculatorAction.Reciprocal -> applyReciprocal()
+            is CalculatorAction.NumberPi -> enterNumberPi()
+
             null -> return
         }
             val expression = "${state.number1} ${state.operation?.symbol} ${state.number2} = ${result.toString().take(15)}"

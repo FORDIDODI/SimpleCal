@@ -16,6 +16,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.simplecal.ui.theme.MediumGray
 import com.example.simplecal.ui.theme.SimpleCalTheme
+import android.content.res.Configuration
+import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.platform.LocalConfiguration
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,17 +28,21 @@ class MainActivity : ComponentActivity() {
             SimpleCalTheme {
                 val viewModel = viewModel<CalculatorViewModel>()
                 val state = viewModel.state
+                val configuration = LocalConfiguration.current
                 val buttonSpacing = 8.dp
-                Calculator(
-                    state = state,
-                    history = viewModel.history.value,
-                    onAction = viewModel::onAction,
-                    buttonSpacing = buttonSpacing,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MediumGray)
-                        .padding(16.dp)
-                )
+                if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    CalculatorScientificLayout(
+                        state = state,
+                        history = viewModel.history.value,
+                        onAction = viewModel::onAction
+                    )
+                } else {
+                    CalculatorBasicLayout(
+                        state = state,
+                        history = viewModel.history.value,
+                        onAction = viewModel::onAction
+                    )
+                }
             }
         }
     }
