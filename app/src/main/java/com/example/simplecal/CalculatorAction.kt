@@ -9,6 +9,7 @@ sealed class CalculatorAction {
     object Percent: CalculatorAction()
     object ToggleSign: CalculatorAction()
     data class Operation(val operation: CalculatorOperation): CalculatorAction()
+    object Parentheses: CalculatorAction()
 
     //Tambahan buat scientific part nya
     object Sqrt: CalculatorAction()

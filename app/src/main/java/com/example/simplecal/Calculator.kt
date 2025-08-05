@@ -5,26 +5,51 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.simplecal.ui.theme.LightGray
 import com.example.simplecal.ui.theme.Orange
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Backspace
+import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.clip
+
+
+// Fungsi untuk mengurai text yang diedit dan mengupdate state
+private fun parseAndUpdateStateFromText(text: String, viewModel: CalculatorViewModel) {
+    viewModel.updateStateFromText(text)
+}
 
 @Composable
 fun Calculator(
@@ -32,7 +57,8 @@ fun Calculator(
     history: List<String>,
     buttonSpacing: Dp = 8.dp,
     modifier: Modifier = Modifier,
-    onAction: (CalculatorAction) -> Unit
+    onAction: (CalculatorAction) -> Unit,
+    viewModel: CalculatorViewModel
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -57,26 +83,67 @@ fun Calculator(
                     )
                 }
             }
-            // Hasil utama, font size adaptif, maxLines 1, overflow ellipsis
-            Text(
-                text = state.number1 + (state.operation?.symbol ?: "") + state.number2,
-                textAlign = TextAlign.End,
+            // Hasil utama, bisa diedit dengan cursor yang bisa dipindahkan
+            val focusRequester = remember { FocusRequester() }
+            val textFieldValue = remember { mutableStateOf(TextFieldValue("")) }
+            
+            LaunchedEffect(state.number1 + (state.operation?.symbol ?: "") + state.number2) {
+                textFieldValue.value = TextFieldValue(
+                    text = state.number1 + (state.operation?.symbol ?: "") + state.number2,
+                    selection = TextRange(textFieldValue.value.text.length)
+                )
+            }
+            
+            BasicTextField(
+                value = textFieldValue.value,
+                onValueChange = { newValue ->
+                    textFieldValue.value = newValue
+                    // Parse input dan update state berdasarkan text yang diedit
+                    parseAndUpdateStateFromText(newValue.text, viewModel)
+                },
+                textStyle = androidx.compose.ui.text.TextStyle(
+                    color = Color.White,
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.Light,
+                    textAlign = TextAlign.End
+                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                fontWeight = FontWeight.Light,
-                fontSize = 48.sp,
-                color = Color.White,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                    .padding(vertical = 16.dp)
+                    .focusRequester(focusRequester),
+                singleLine = true,
+                cursorBrush = SolidColor(Color.Green)
             )
+            // Tombol Delete terpisah di atas kalkulator
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .background(LightGray)
+                        .clip(CircleShape)
+                        .clickable { onAction(CalculatorAction.Delete) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Backspace,
+                        contentDescription = "Delete",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(8.dp))
             // Grid tombol basic, selalu 4 kolom (portrait) atau 5 kolom (landscape)
             val configuration = LocalConfiguration.current
             val isPortrait = configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
             val buttonRows = if (isPortrait) 5 else 4
             val buttonCols = if (isPortrait) 4 else 5
             val buttons = listOf(
-                listOf("C", "%", "Del", "/"),
+                listOf("C", "%", "()", "/"),
                 listOf("7", "8", "9", "x"),
                 listOf("4", "5", "6", "-"),
                 listOf("1", "2", "3", "+"),
@@ -86,7 +153,7 @@ fun Calculator(
                 listOf(
                     { onAction(CalculatorAction.Clear) },
                     { onAction(CalculatorAction.Percent) },
-                    { onAction(CalculatorAction.Delete) },
+                    { onAction(CalculatorAction.Parentheses) },
                     { onAction(CalculatorAction.Operation(CalculatorOperation.Divide)) }
                 ),
                 listOf(
@@ -123,18 +190,22 @@ fun Calculator(
                         val label = buttons.getOrNull(row)?.getOrNull(col) ?: ""
                         val action = actions.getOrNull(row)?.getOrNull(col) ?: {}
                         val color = when (label) {
-                            "C", "Del" -> LightGray
+                            "C" -> LightGray
                             "%", "/", "x", "-", "+", "=" -> Orange
                             else -> Color.DarkGray
                         }
-                        CalculatorButton(
-                            symbol = label,
-                            modifier = Modifier
-                                .aspectRatio(1f)
-                                .weight(1f)
-                                .background(color),
-                            onClick = action
-                        )
+                        if (label.isNotEmpty()) {
+                            CalculatorButton(
+                                symbol = label,
+                                modifier = Modifier
+                                    .aspectRatio(1f)
+                                    .weight(1f)
+                                    .background(color),
+                                onClick = action
+                            )
+                        } else {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
                     }
                 }
             }

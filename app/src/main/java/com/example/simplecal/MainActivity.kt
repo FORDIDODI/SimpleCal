@@ -25,14 +25,16 @@ class MainActivity : ComponentActivity() {
                         state = state,
                         history = history,
                         onAction = viewModel::onAction,
-                        onToggleMode = { viewModel.toggleScientificMode() } // ✅ Tetap
+                        onToggleMode = { viewModel.toggleScientificMode() },
+                        viewModel = viewModel
                     )
                 } else {
                     CalculatorBasicLayout(
                         state = state,
                         history = history,
                         onAction = viewModel::onAction,
-                        onToggleMode = { viewModel.toggleScientificMode() } // ✅ Tetap
+                        onToggleMode = { viewModel.toggleScientificMode() },
+                        viewModel = viewModel
                     )
                 }
             }

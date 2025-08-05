@@ -27,7 +27,8 @@ fun CalculatorScientificLayout(
     state: CalculatorState,
     history: List<String>,
     onAction : (CalculatorAction) -> Unit,
-    onToggleMode: () -> Unit
+    onToggleMode: () -> Unit,
+    viewModel: CalculatorViewModel
 ) {
     val configuration = LocalConfiguration.current
     val isPortrait = configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
@@ -83,7 +84,8 @@ fun CalculatorScientificLayout(
                     history = history,
                     onAction = onAction,
                     buttonSpacing = 8.dp,
-                    modifier = Modifier.weight(3f)
+                    modifier = Modifier.weight(3f),
+                    viewModel = viewModel
                 )
             }
         } else {
@@ -109,7 +111,8 @@ fun CalculatorScientificLayout(
                     history = history,
                     onAction = onAction,
                     buttonSpacing = 8.dp,
-                    modifier = Modifier.weight(3f)
+                    modifier = Modifier.weight(3f),
+                    viewModel = viewModel
                 )
             }
         }

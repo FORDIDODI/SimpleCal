@@ -18,7 +18,8 @@ fun CalculatorBasicLayout(
     state: CalculatorState,
     history: List<String>,
     onAction: (CalculatorAction) -> Unit,
-    onToggleMode: () -> Unit
+    onToggleMode: () -> Unit,
+    viewModel: CalculatorViewModel
 ) {
     Column(
         modifier = Modifier
@@ -58,7 +59,8 @@ fun CalculatorBasicLayout(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MediumGray)
-                .padding(25.dp)
+                .padding(25.dp),
+            viewModel = viewModel
         )
     }
 }
