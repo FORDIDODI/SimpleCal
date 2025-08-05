@@ -13,6 +13,13 @@ class CalculatorViewModel: ViewModel() {
 
     val history = mutableStateOf<List<String>>(emptyList())
 
+    var isScientificMode by mutableStateOf(false)
+        private set
+
+    fun toggleScientificMode() {
+        isScientificMode = !isScientificMode
+    }
+
     fun onAction(action: CalculatorAction) {
         when(action) {
             is CalculatorAction.Number -> enterNumber(action.number)
@@ -27,6 +34,14 @@ class CalculatorViewModel: ViewModel() {
             is CalculatorAction.Square -> applySquare()
             is CalculatorAction.Reciprocal -> applyReciprocal()
             is CalculatorAction.NumberPi -> enterPi()
+            is CalculatorAction.Sin -> applyTrig("sin")
+            is CalculatorAction.Cos -> applyTrig("cos")
+            is CalculatorAction.Tan -> applyTrig("tan")
+            is CalculatorAction.Log -> applyLog()
+            is CalculatorAction.Ln -> applyLn()
+            is CalculatorAction.Exp -> applyExp()
+            is CalculatorAction.Factorial -> applyFactorial()
+
 
         }
     }
@@ -174,6 +189,50 @@ class CalculatorViewModel: ViewModel() {
         val piValue = Math.PI.toString().take(15)
         state = state.copy(number1 = piValue, number2 = "", operation = null)
     }
+
+    private fun applyTrig(type: String) {
+        val number = state.number1.toDoubleOrNull()
+        if (number != null) {
+            val radians = Math.toRadians(number)
+            val result = when(type) {
+                "sin" -> kotlin.math.sin(radians)
+                "cos" -> kotlin.math.cos(radians)
+                "tan" -> kotlin.math.tan(radians)
+                else -> return
+            }
+            state = state.copy(number1 = result.toString().take(15), number2 = "", operation = null)
+        }
+    }
+    private fun applyLog() {
+        val number = state.number1.toDoubleOrNull()
+        if (number != null && number > 0) {
+            val result = kotlin.math.log10(number)
+            state = state.copy(number1 = result.toString().take(15), number2 = "", operation = null)
+        }
+    }
+    private fun applyLn() {
+        val number = state.number1.toDoubleOrNull()
+        if (number != null && number > 0) {
+            val result = kotlin.math.ln(number)
+            state = state.copy(number1 = result.toString().take(15), number2 = "", operation = null)
+        }
+    }
+    private fun applyExp() {
+        val number = state.number1.toDoubleOrNull()
+        if (number != null && number > 0) {
+            val result = kotlin.math.exp(number)
+            state = state.copy(number1 = result.toString().take(15), number2 = "", operation = null)
+        }
+    }
+    private fun applyFactorial() {
+        val number = state.number1.toDoubleOrNull()
+        if (number != null && number > 0 && number == number.toInt().toDouble()) {
+            val intNumber = number.toInt()
+            val result = (1..intNumber).fold(1L) { acc, i -> acc * i}
+            state = state.copy(number1 = result.toString(), number2 = "", operation = null)
+        }
+    }
+
 
     companion object {
         private const val MAX_NUM_LENGTH = 8
