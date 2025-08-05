@@ -13,21 +13,21 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun CalculatorButton(
-    Symbol: String,
+    symbol: String,
     modifier: Modifier,
     onClick: () -> Unit
 ) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
+        modifier = modifier
             .clip(CircleShape)
-            .clickable { onClick() }
-            .then(modifier)
+            .clickable(onClick = onClick) // ← otomatis pakai ripple dari tema Material3
     ) {
         Text(
-            text = Symbol,
-            fontSize = 36.sp,
-            color = Color.White
+            text = symbol,
+            fontSize = 28.sp,
+            color = Color.White,
+            maxLines = 1
         )
     }
 }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Straighten
+import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
@@ -35,6 +36,14 @@ fun CalculatorBasicLayout(
                 Icon(
                     imageVector = Icons.Filled.Straighten, // ikon penggaris
                     contentDescription = "Scientific Mode",
+                    tint = Color.White
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(onClick = onToggleMode) {
+                Icon(
+                    imageVector = Icons.Filled.Calculate, // ikon kalkulator
+                    contentDescription = "Basic Mode",
                     tint = Color.White
                 )
             }

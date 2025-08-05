@@ -41,6 +41,8 @@ class CalculatorViewModel: ViewModel() {
             is CalculatorAction.Ln -> applyLn()
             is CalculatorAction.Exp -> applyExp()
             is CalculatorAction.Factorial -> applyFactorial()
+            is CalculatorAction.Power -> applyPower()
+            is CalculatorAction.NumberE -> enterE()
 
 
         }
@@ -70,18 +72,14 @@ class CalculatorViewModel: ViewModel() {
         val number1 = state.number1.toDoubleOrNull()
         val number2 = state.number2.toDoubleOrNull()
         if (number1 != null && number2 != null) {
-        val result = when(state.operation) {
-            is CalculatorOperation.Add -> number1 + number2
-            is CalculatorOperation.Subtract -> number1 - number2
-            is CalculatorOperation.Multiply -> number1 * number2
-            is CalculatorOperation.Divide -> number1 / number2
-            is CalculatorAction.Sqrt -> applySqrt()
-            is CalculatorAction.Square -> applySquare()
-            is CalculatorAction.Reciprocal -> applyReciprocal()
-            is CalculatorAction.NumberPi -> enterPi()
+            val result = when (state.operation) {
+                is CalculatorOperation.Add -> number1 + number2
+                is CalculatorOperation.Subtract -> number1 - number2
+                is CalculatorOperation.Multiply -> number1 * number2
+                is CalculatorOperation.Divide -> number1 / number2
+                else -> return
+            }
 
-            null -> return
-        }
             val expression = "${state.number1} ${state.operation?.symbol} ${state.number2} = ${result.toString().take(15)}"
             history.value = listOf(expression) + history.value.take(9)
             state = state.copy(
@@ -91,6 +89,7 @@ class CalculatorViewModel: ViewModel() {
             )
         }
     }
+
 
     private fun enterOperation(operation: CalculatorOperation) {
         if(state.number1.isNotBlank()) {
@@ -135,12 +134,15 @@ class CalculatorViewModel: ViewModel() {
         if (state.operation == null) {
             val num1 = state.number1.toDoubleOrNull()
             if (num1 != null) {
-                state = state.copy(number1 = (num1 / 100).toString())
+                state = state.copy(number1 = (num1 / 100).toString(), number2 = "")
             }
         } else {
+            val num1 = state.number1.toDoubleOrNull()
             val num2 = state.number2.toDoubleOrNull()
-            if (num2 != null) {
-                state =state.copy(number2 = (num2 / 100).toString())
+            if (num1 != null && num2 != null) {
+                // number2 menjadi persentase dari number1
+                val percentValue = num1 * (num2 / 100)
+                state = state.copy(number2 = percentValue.toString())
             }
         }
     }
@@ -190,31 +192,33 @@ class CalculatorViewModel: ViewModel() {
         state = state.copy(number1 = piValue, number2 = "", operation = null)
     }
 
+    // Scientific: hanya menambah fungsi ke input, bukan langsung menghitung
     private fun applyTrig(type: String) {
-        val number = state.number1.toDoubleOrNull()
-        if (number != null) {
-            val radians = Math.toRadians(number)
-            val result = when(type) {
-                "sin" -> kotlin.math.sin(radians)
-                "cos" -> kotlin.math.cos(radians)
-                "tan" -> kotlin.math.tan(radians)
-                else -> return
-            }
-            state = state.copy(number1 = result.toString().take(15), number2 = "", operation = null)
+        // Tambahkan fungsi ke input, misal sin(, cos(, dst
+        val current = if (state.operation == null) state.number1 else state.number2
+        val newValue = "$type("
+        if (state.operation == null) {
+            state = state.copy(number1 = newValue)
+        } else {
+            state = state.copy(number2 = newValue)
         }
     }
     private fun applyLog() {
-        val number = state.number1.toDoubleOrNull()
-        if (number != null && number > 0) {
-            val result = kotlin.math.log10(number)
-            state = state.copy(number1 = result.toString().take(15), number2 = "", operation = null)
+        val current = if (state.operation == null) state.number1 else state.number2
+        val newValue = "log("
+        if (state.operation == null) {
+            state = state.copy(number1 = newValue)
+        } else {
+            state = state.copy(number2 = newValue)
         }
     }
     private fun applyLn() {
-        val number = state.number1.toDoubleOrNull()
-        if (number != null && number > 0) {
-            val result = kotlin.math.ln(number)
-            state = state.copy(number1 = result.toString().take(15), number2 = "", operation = null)
+        val current = if (state.operation == null) state.number1 else state.number2
+        val newValue = "ln("
+        if (state.operation == null) {
+            state = state.copy(number1 = newValue)
+        } else {
+            state = state.copy(number2 = newValue)
         }
     }
     private fun applyExp() {
@@ -231,6 +235,19 @@ class CalculatorViewModel: ViewModel() {
             val result = (1..intNumber).fold(1L) { acc, i -> acc * i}
             state = state.copy(number1 = result.toString(), number2 = "", operation = null)
         }
+    }
+
+    private fun applyPower() {
+        val number1 = state.number1.toDoubleOrNull()
+        val number2 = state.number2.toDoubleOrNull()
+        if (number1 != null && number2 != null) {
+            val result = Math.pow(number1, number2)
+            state = state.copy(number1 = result.toString().take(15), number2 = "", operation = null)
+        }
+    }
+    private fun enterE() {
+        val eValue = Math.E.toString().take(15)
+        state = state.copy(number1 = eValue, number2 = "", operation = null)
     }
 
 

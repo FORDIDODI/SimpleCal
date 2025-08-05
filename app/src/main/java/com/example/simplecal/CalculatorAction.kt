@@ -22,5 +22,7 @@ sealed class CalculatorAction {
     object Ln: CalculatorAction()
     object Exp: CalculatorAction()
     object Factorial: CalculatorAction()
+    object Power: CalculatorAction()
+    object NumberE: CalculatorAction()
 
 }
