@@ -105,6 +105,26 @@ class CalculatorViewModel : ViewModel() {
             is CalculatorAction.Power -> applyPower()
             is CalculatorAction.NumberE -> enterE()
             is CalculatorAction.Parentheses -> handleParentheses()
+            is CalculatorAction.CloseParenthesis -> handleCloseParenthesis()
+            is CalculatorAction.Cube -> applyCube()
+            else -> {}
+        }
+    }
+
+    private fun handleCloseParenthesis() {
+        val lastChar = currentInput.lastOrNull()
+        val lastNumber = state.number2.ifEmpty { state.number1 }
+        val operators = setOf('+', '-', '×', 'x', '/', '÷', '^', '(')
+
+        // If there are open parentheses and we have a number, add closing parenthesis
+        if (state.openParentheses > 0 && lastNumber.isNotEmpty() && lastNumber.last().isDigit()) {
+            currentInput += ")"
+            state = state.copy(
+                number1 = if (state.operation == null) state.number1 + ")" else state.number1,
+                number2 = if (state.operation != null) state.number2 + ")" else state.number2,
+                openParentheses = state.openParentheses - 1,
+                expression = currentInput
+            )
         }
     }
 
@@ -445,6 +465,20 @@ class CalculatorViewModel : ViewModel() {
         } else {
             currentInput = state.number1 + state.operation?.symbol + eValue
             state = state.copy(number2 = eValue)
+        }
+    }
+
+    private fun applyCube() {
+        if (state.operation == null) {
+            val number = state.number1.toDoubleOrNull() ?: 0.0
+            val result = number * number * number
+            currentInput = result.toString()
+            state = state.copy(number1 = currentInput, number2 = "", operation = null)
+        } else {
+            val number = state.number2.toDoubleOrNull() ?: 0.0
+            val result = number * number * number
+            currentInput = state.number1 + state.operation?.symbol + result.toString()
+            state = state.copy(number2 = result.toString())
         }
     }
 

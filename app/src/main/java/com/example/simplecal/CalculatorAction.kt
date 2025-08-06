@@ -4,7 +4,7 @@ sealed class CalculatorAction {
     data class Number(val number: Int): CalculatorAction()
     object Clear: CalculatorAction()
     object Delete: CalculatorAction()
-    object  Decimal: CalculatorAction()
+    object Decimal: CalculatorAction()
     object Calculate: CalculatorAction()
     object Percent: CalculatorAction()
     object ToggleSign: CalculatorAction()
@@ -14,6 +14,7 @@ sealed class CalculatorAction {
     //Tambahan buat scientific part nya
     object Sqrt: CalculatorAction()
     object Square: CalculatorAction()
+    object Cube: CalculatorAction()
     object Reciprocal: CalculatorAction()
     object NumberPi: CalculatorAction()
     object Sin: CalculatorAction()
@@ -26,6 +27,5 @@ sealed class CalculatorAction {
     object Power: CalculatorAction()
     object NumberE: CalculatorAction()
     data class Parenthesis(val symbol: String) : CalculatorAction()
-
-
+    object CloseParenthesis: CalculatorAction()
 }

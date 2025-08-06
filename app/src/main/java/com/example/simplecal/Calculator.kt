@@ -56,7 +56,7 @@ private fun parseAndUpdateStateFromText(text: String, viewModel: CalculatorViewM
 fun Calculator(
     state: CalculatorState,
     history: List<String>,
-    buttonSpacing: Dp = 8.dp,
+    buttonSpacing: Dp = 4.dp,
     modifier: Modifier = Modifier,
     onAction: (CalculatorAction) -> Unit,
     viewModel: CalculatorViewModel,
@@ -70,7 +70,7 @@ fun Calculator(
                 .align(Alignment.BottomCenter),
             verticalArrangement = Arrangement.spacedBy(buttonSpacing)
         ) {
-            // History tetap, tapi hasil utama tampil di bawahnya, tidak overlap
+            // History
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -86,7 +86,8 @@ fun Calculator(
                     )
                 }
             }
-            // Hasil utama, bisa diedit dengan cursor yang bisa dipindahkan
+
+            // Main input field
             val focusRequester = remember { FocusRequester() }
             val textFieldValue = remember { mutableStateOf(TextFieldValue("")) }
             
@@ -101,34 +102,34 @@ fun Calculator(
                 value = textFieldValue.value,
                 onValueChange = { newValue ->
                     textFieldValue.value = newValue
-                    // Parse input dan update state berdasarkan text yang diedit
                     parseAndUpdateStateFromText(newValue.text, viewModel)
                 },
                 textStyle = androidx.compose.ui.text.TextStyle(
                     color = Color.White,
-                    fontSize = 48.sp,
+                    fontSize = 36.sp,
                     fontWeight = FontWeight.Light,
                     textAlign = TextAlign.End
                 ),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
                     .focusRequester(focusRequester),
                 singleLine = true,
                 cursorBrush = SolidColor(Color.Green)
             )
-            // Tombol Delete dan Scientific Mode terpisah di atas kalkulator
+
+            // Toggle and Delete buttons row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                    .padding(horizontal = 8.dp, vertical = 2.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 // Scientific Toggle Button
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .clickable { onToggleScientific() }
                         .border(
@@ -148,7 +149,7 @@ fun Calculator(
                 // Delete button
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .clickable { onAction(CalculatorAction.Delete) }
                         .border(
@@ -166,8 +167,8 @@ fun Calculator(
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            // Grid tombol basic, selalu 4 kolom (portrait) atau 5 kolom (landscape)
+
+            // Calculator buttons grid
             val configuration = LocalConfiguration.current
             val isPortrait = configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
             val buttonRows = if (isPortrait) 5 else 4
