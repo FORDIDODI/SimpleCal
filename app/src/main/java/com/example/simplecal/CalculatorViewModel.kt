@@ -4,6 +4,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import kotlin.math.exp
+import kotlin.math.ln
+import kotlin.math.pow
 
 class CalculatorViewModel : ViewModel() {
 
@@ -27,31 +30,66 @@ class CalculatorViewModel : ViewModel() {
                 currentInput += action.number
                 updateStateFromText(currentInput)
             }
+            is CalculatorAction.Decimal -> {
+                val currentNumber = if (state.operation == null) state.number1 else state.number2
+                if (!currentNumber.contains(".")) {
+                    if (currentNumber.isEmpty()) {
+                        currentInput += "0."
+                    } else {
+                        currentInput += "."
+                    }
+                    updateStateFromText(currentInput)
+                }
+            }
             is CalculatorAction.Parenthesis -> {
                 currentInput += action.symbol
                 updateStateFromText(currentInput)
             }
             is CalculatorAction.Operation -> {
                 if (currentInput.isNotEmpty()) {
-                    val lastChar = currentInput.last()
-                    if (lastChar.isDigit() || lastChar == ')') {
+                    val lastChar = currentInput.lastOrNull()
+                    if (lastChar != null && (lastChar.isDigit() || lastChar == ')')) {
                         currentInput += action.operation.symbol
-                    } else if (lastChar in "+-*/×÷") {
-                        if (currentInput.length > 1 && currentInput[currentInput.length - 2] != '(') {
+                    } else if (lastChar != null && lastChar in "+-*/×÷") {
+                        if (currentInput.length > 1 && currentInput.getOrNull(currentInput.length - 2) != '(') {
                             currentInput = currentInput.dropLast(1) + action.operation.symbol
                         }
                     }
                     updateStateFromText(currentInput)
                 }
             }
-            is CalculatorAction.Decimal -> enterDecimal()
             is CalculatorAction.Clear -> {
                 state = CalculatorState()
                 currentInput = ""
             }
             is CalculatorAction.Calculate -> performCalculation()
             is CalculatorAction.Delete -> performDeletion()
-            is CalculatorAction.Percent -> applyPercent()
+            is CalculatorAction.Percent -> {
+                if (currentInput.isEmpty()) return@onAction
+
+                try {
+                    // If there's an operation, calculate percentage of the first number
+                    if (state.operation != null && state.number2.isNotEmpty()) {
+                        val num1 = state.number1.toDoubleOrNull() ?: 0.0
+                        val num2 = state.number2.toDoubleOrNull() ?: 0.0
+                        val percentValue = (num1 * num2) / 100
+                        currentInput = "$currentInput%"
+                        state = state.copy(
+                            number2 = percentValue.toString(),
+                            expression = currentInput
+                        )
+                    } else {
+                        // If no operation, convert to decimal
+                        val number = currentInput.toDoubleOrNull() ?: 0.0
+                        val decimalValue = number / 100
+                        currentInput = decimalValue.toString()
+                        updateStateFromText(currentInput)
+                    }
+                } catch (e: Exception) {
+                    currentInput = "Error"
+                    updateStateFromText(currentInput)
+                }
+            }
             is CalculatorAction.ToggleSign -> toggleSign()
             is CalculatorAction.Sqrt -> applySqrt()
             is CalculatorAction.Square -> applySquare()
@@ -78,23 +116,29 @@ class CalculatorViewModel : ViewModel() {
     }
 
     private fun handleParentheses() {
-        if (state.operation == null) {
+        val lastChar = currentInput.lastOrNull()
+        val lastNumber = state.number2.ifEmpty { state.number1 }
+        val operators = setOf('+', '-', '×', 'x', '/', '÷', '^', '(')
+
+        // If no open parentheses or last character is an operator, add opening parenthesis
+        if (state.openParentheses == 0 || (lastChar != null && lastChar in operators)) {
+            currentInput += "("
             state = state.copy(
-                number1 = state.number1 + "(",
-                openParentheses = state.openParentheses + 1
+                number1 = if (state.operation == null) state.number1 + "(" else state.number1,
+                number2 = if (state.operation != null) state.number2 + "(" else state.number2,
+                openParentheses = state.openParentheses + 1,
+                expression = currentInput
             )
-        } else {
-            if (state.openParentheses > 0) {
-                state = state.copy(
-                    number2 = state.number2 + ")",
-                    openParentheses = state.openParentheses - 1
-                )
-            } else {
-                state = state.copy(
-                    number2 = state.number2 + "(",
-                    openParentheses = state.openParentheses + 1
-                )
-            }
+        }
+        // If there are open parentheses and we have a number, add closing parenthesis
+        else if (state.openParentheses > 0 && lastNumber.isNotEmpty() && lastNumber.last().isDigit()) {
+            currentInput += ")"
+            state = state.copy(
+                number1 = if (state.operation == null) state.number1 + ")" else state.number1,
+                number2 = if (state.operation != null) state.number2 + ")" else state.number2,
+                openParentheses = state.openParentheses - 1,
+                expression = currentInput
+            )
         }
     }
 
@@ -125,7 +169,26 @@ class CalculatorViewModel : ViewModel() {
     }
 
     private fun evaluateExpression(expression: String): Double {
-        val tokens = tokenize(expression)
+        // First, handle percentages
+        var expr = expression.replace("%", "/100")
+        
+        // Handle negative numbers by adding 0 before negative signs that are at the start or after an operator
+        expr = expr.replace(Regex("(?<=[+\\-×x/÷(]|^)(?=-\\d)"), "0")
+        
+        // Handle percentage calculations first
+        val processedExpression = if ('%' in expr) {
+            val parts = expr.split('+')
+            if (parts.size == 2 && parts[1].trim().endsWith('%')) {
+                val base = parts[0].trim().toDoubleOrNull() ?: 0.0
+                val percent = parts[1].trim().removeSuffix("%").toDoubleOrNull() ?: 0.0
+                return base * (1 + percent / 100)
+            }
+            expr.replace("%", "").toDoubleOrNull()?.div(100)?.toString() ?: expr
+        } else {
+            expr
+        }
+
+        val tokens = tokenize(processedExpression)
         return evaluateTokens(tokens)
     }
 
@@ -203,26 +266,187 @@ class CalculatorViewModel : ViewModel() {
     }
 
     private fun enterDecimal() {
-        if (state.operation == null && !state.number1.contains(".")) {
-            state = state.copy(number1 = state.number1 + ".")
-        } else if (!state.number2.contains(".")) {
-            state = state.copy(number2 = state.number2 + ".")
+        val currentNumber = if (state.operation == null) state.number1 else state.number2
+        if (!currentNumber.contains(".")) {
+            if (currentNumber.isEmpty()) {
+                currentInput += "0."
+            } else {
+                currentInput += "."
+            }
+            updateStateFromText(currentInput)
         }
     }
 
-    private fun applyPercent() { /* unchanged */ }
-    private fun toggleSign() { /* unchanged */ }
-    private fun applySqrt() { /* unchanged */ }
-    private fun applySquare() { /* unchanged */ }
-    private fun applyReciprocal() { /* unchanged */ }
-    private fun enterPi() { /* unchanged */ }
-    private fun applyTrig(type: String) { /* unchanged */ }
-    private fun applyLog() { /* unchanged */ }
-    private fun applyLn() { /* unchanged */ }
-    private fun applyExp() { /* unchanged */ }
-    private fun applyFactorial() { /* unchanged */ }
-    private fun applyPower() { /* unchanged */ }
-    private fun enterE() { /* unchanged */ }
+    private fun applyExp() {
+        if (state.operation == null) {
+            val number = state.number1.toDoubleOrNull() ?: 0.0
+            val result = exp(number)
+            currentInput = result.toString()
+            state = state.copy(number1 = currentInput, number2 = "", operation = null)
+        } else {
+            val number = state.number2.toDoubleOrNull() ?: 0.0
+            val result = exp(number)
+            currentInput = state.number1 + state.operation?.symbol + result.toString()
+            state = state.copy(number2 = result.toString())
+        }
+    }
+
+    private fun applyLog() {
+        currentInput += "log("
+        state = state.copy(
+            number1 = if (state.operation == null) currentInput else state.number1,
+            expression = currentInput
+        )
+    }
+
+    private fun applyTrig(type: String) {
+        currentInput += "$type("
+        state = state.copy(
+            number1 = if (state.operation == null) currentInput else state.number1,
+            expression = currentInput
+        )
+    }
+
+    private fun applySqrt() {
+        currentInput += "√("
+        state = state.copy(
+            number1 = if (state.operation == null) currentInput else state.number1,
+            expression = currentInput
+        )
+    }
+
+    private fun applyLn() {
+        if (state.operation == null) {
+            val number = state.number1.toDoubleOrNull() ?: 0.0
+            val result = if (number > 0) ln(number) else Double.NaN
+            currentInput = result.toString()
+            state = state.copy(number1 = currentInput, number2 = "", operation = null)
+        } else {
+            val number = state.number2.toDoubleOrNull() ?: 0.0
+            val result = if (number > 0) ln(number) else Double.NaN
+            currentInput = state.number1 + state.operation?.symbol + result.toString()
+            state = state.copy(number2 = result.toString())
+        }
+    }
+
+    private fun applyPercent() {
+        if (state.operation == null) {
+            val number = state.number1.toDoubleOrNull() ?: 0.0
+            val result = number / 100
+            currentInput = result.toString()
+            state = state.copy(number1 = currentInput, number2 = "", operation = null)
+        } else {
+            val number = state.number2.toDoubleOrNull() ?: 0.0
+            val percentage = state.number1.toDoubleOrNull() ?: 0.0
+            val result = percentage * (number / 100)
+            currentInput = state.number1 + state.operation?.symbol + result.toString()
+            state = state.copy(number2 = result.toString())
+        }
+    }
+
+    private fun toggleSign() {
+        if (state.operation == null) {
+            val number = state.number1.toDoubleOrNull() ?: 0.0
+            val result = -number
+            currentInput = result.toString()
+            state = state.copy(number1 = currentInput)
+        } else {
+            val number = state.number2.toDoubleOrNull() ?: 0.0
+            val result = -number
+            currentInput = state.number1 + state.operation?.symbol + result.toString()
+            state = state.copy(number2 = result.toString())
+        }
+    }
+
+    private fun applySquare() {
+        if (state.operation == null) {
+            val number = state.number1.toDoubleOrNull() ?: 0.0
+            val result = number * number
+            currentInput = result.toString()
+            state = state.copy(number1 = currentInput, number2 = "", operation = null)
+        } else {
+            val number = state.number2.toDoubleOrNull() ?: 0.0
+            val result = number * number
+            currentInput = state.number1 + state.operation?.symbol + result.toString()
+            state = state.copy(number2 = result.toString())
+        }
+    }
+
+    private fun applyReciprocal() {
+        if (state.operation == null) {
+            val number = state.number1.toDoubleOrNull() ?: 0.0
+            val result = if (number != 0.0) 1.0 / number else Double.POSITIVE_INFINITY
+            currentInput = result.toString()
+            state = state.copy(number1 = currentInput, number2 = "", operation = null)
+        } else {
+            val number = state.number2.toDoubleOrNull() ?: 0.0
+            val result = if (number != 0.0) 1.0 / number else Double.POSITIVE_INFINITY
+            currentInput = state.number1 + state.operation?.symbol + result.toString()
+            state = state.copy(number2 = result.toString())
+        }
+    }
+
+    private fun enterPi() {
+        val piValue = "3.141592653589793"
+        if (state.operation == null) {
+            currentInput = piValue
+            state = state.copy(number1 = piValue, number2 = "", operation = null)
+        } else {
+            currentInput = state.number1 + state.operation?.symbol + piValue
+            state = state.copy(number2 = piValue)
+        }
+    }
+
+    private fun applyFactorial() {
+        fun factorial(n: Double): Double {
+            return if (n <= 1) 1.0 else n * factorial(n - 1)
+        }
+
+        if (state.operation == null) {
+            val number = state.number1.toDoubleOrNull() ?: 0.0
+            val result = if (number >= 0 && number == number.toInt().toDouble()) {
+                factorial(number)
+            } else {
+                Double.NaN
+            }
+            currentInput = result.toString()
+            state = state.copy(number1 = currentInput, number2 = "", operation = null)
+        } else {
+            val number = state.number2.toDoubleOrNull() ?: 0.0
+            val result = if (number >= 0 && number == number.toInt().toDouble()) {
+                factorial(number)
+            } else {
+                Double.NaN
+            }
+            currentInput = state.number1 + state.operation?.symbol + result.toString()
+            state = state.copy(number2 = result.toString())
+        }
+    }
+
+    private fun applyPower() {
+        if (state.operation == null) {
+            val number = state.number1.toDoubleOrNull() ?: 0.0
+            currentInput = "$number^"
+            state = state.copy(operation = CalculatorOperation.Power, number1 = number.toString())
+        } else {
+            val base = state.number1.toDoubleOrNull() ?: 0.0
+            val exponent = state.number2.toDoubleOrNull() ?: 0.0
+            val result = base.pow(exponent)
+            currentInput = result.toString()
+            state = state.copy(number1 = currentInput, number2 = "", operation = null)
+        }
+    }
+
+    private fun enterE() {
+        val eValue = "2.718281828459045"
+        if (state.operation == null) {
+            currentInput = eValue
+            state = state.copy(number1 = eValue, number2 = "", operation = null)
+        } else {
+            currentInput = state.number1 + state.operation?.symbol + eValue
+            state = state.copy(number2 = eValue)
+        }
+    }
 
     fun updateStateFromText(text: String) {
         if (text.isEmpty()) {
@@ -232,19 +456,19 @@ class CalculatorViewModel : ViewModel() {
 
         // Keep the full expression in the state for display
         state = state.copy(expression = text)
-        
+
         // For calculation purposes, we still need to parse the numbers and operation
         var parenthesesCount = 0
         var currentNumber1 = ""
         var currentNumber2 = ""
         var currentOperation: String? = null
-        val operators = setOf("+", "-", "×", "x", "/", "÷")
+        val operators = setOf('+', '-', '×', 'x', '/', '÷')
         var lastWasOperator = false
-        
+
         // Find the last operator that's not inside parentheses
         var lastOpIndex = -1
         var parenLevel = 0
-        
+
         for (i in text.indices) {
             when (text[i]) {
                 '(' -> parenLevel++
@@ -252,7 +476,7 @@ class CalculatorViewModel : ViewModel() {
                 in "+-×x/÷" -> if (parenLevel == 0) lastOpIndex = i
             }
         }
-        
+
         if (lastOpIndex != -1) {
             currentNumber1 = text.substring(0, lastOpIndex)
             currentOperation = text[lastOpIndex].toString()
@@ -260,10 +484,10 @@ class CalculatorViewModel : ViewModel() {
         } else {
             currentNumber1 = text
         }
-        
+
         // Count open parentheses for the state
         parenthesesCount = text.count { it == '(' } - text.count { it == ')' }
-        
+
         val operation = when (currentOperation) {
             "+" -> CalculatorOperation.Add
             "-" -> CalculatorOperation.Subtract
@@ -271,7 +495,7 @@ class CalculatorViewModel : ViewModel() {
             "/", "÷" -> CalculatorOperation.Divide
             else -> null
         }
-        
+
         state = state.copy(
             number1 = currentNumber1,
             number2 = currentNumber2,

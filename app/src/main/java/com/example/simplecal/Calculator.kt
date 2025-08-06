@@ -1,6 +1,7 @@
 package com.example.simplecal
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,7 +45,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Backspace
 import androidx.compose.material3.Icon
 import androidx.compose.ui.draw.clip
-
+import androidx.compose.foundation.border
 
 // Fungsi untuk mengurai text yang diedit dan mengupdate state
 private fun parseAndUpdateStateFromText(text: String, viewModel: CalculatorViewModel) {
@@ -58,7 +59,9 @@ fun Calculator(
     buttonSpacing: Dp = 8.dp,
     modifier: Modifier = Modifier,
     onAction: (CalculatorAction) -> Unit,
-    viewModel: CalculatorViewModel
+    viewModel: CalculatorViewModel,
+    onToggleScientific: () -> Unit,
+    isScientificMode: Boolean = false
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -110,22 +113,49 @@ fun Calculator(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
                     .focusRequester(focusRequester),
                 singleLine = true,
                 cursorBrush = SolidColor(Color.Green)
             )
-            // Tombol Delete terpisah di atas kalkulator
+            // Tombol Delete dan Scientific Mode terpisah di atas kalkulator
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                // Scientific Toggle Button
                 Box(
                     modifier = Modifier
                         .size(56.dp)
-                        .background(LightGray)
                         .clip(CircleShape)
-                        .clickable { onAction(CalculatorAction.Delete) },
+                        .clickable { onToggleScientific() }
+                        .border(
+                            width = 1.dp,
+                            color = if (isScientificMode) Color.Yellow else Color.Transparent,
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Sci",
+                        color = if (isScientificMode) Color.Yellow else Color.White,
+                        fontSize = 16.sp
+                    )
+                }
+
+                // Delete button
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .clickable { onAction(CalculatorAction.Delete) }
+                        .border(
+                            width = 1.dp,
+                            color = Color.Yellow,
+                            shape = CircleShape
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
