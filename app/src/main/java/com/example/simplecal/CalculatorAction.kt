@@ -25,5 +25,7 @@ sealed class CalculatorAction {
     object Factorial: CalculatorAction()
     object Power: CalculatorAction()
     object NumberE: CalculatorAction()
+    data class Parenthesis(val symbol: String) : CalculatorAction()
+
 
 }

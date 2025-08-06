@@ -20,12 +20,32 @@ class CalculatorViewModel: ViewModel() {
         isScientificMode = !isScientificMode
     }
 
+    var currentInput by mutableStateOf("")
+
     fun onAction(action: CalculatorAction) {
-        when(action) {
-            is CalculatorAction.Number -> enterNumber(action.number)
+        when (action) {
+            is CalculatorAction.Number -> currentInput += action.number
+            is CalculatorAction.Parenthesis -> currentInput += action.symbol // "(" atau ")"
+            is CalculatorAction.Operation -> {
+                if (currentInput.isNotEmpty()) {
+                    val lastChar = currentInput.last()
+                    if (lastChar.isDigit() || lastChar == ')') {
+                        // Boleh tambah operator
+                        currentInput += action.operation.symbol
+                    } else if (lastChar in listOf('+', '-', '*', '/')) {
+                        // Jika ingin ganti operator, bisa ganti di sini
+                        // Tapi jika ingin tambah operator setelah kurung, jangan ganti
+                        if (lastChar == '(') {
+                            // Jangan lakukan apa-apa
+                        } else {
+                            // Ganti operator terakhir (opsional, jika memang ingin)
+                            // currentInput = currentInput.dropLast(1) + action.operation.symbol
+                        }
+                    }
+                }
+            }
             is CalculatorAction.Decimal -> enterDecimal()
             is CalculatorAction.Clear -> state = CalculatorState()
-            is CalculatorAction.Operation -> enterOperation(action.operation)
             is CalculatorAction.Calculate -> performCalculation()
             is CalculatorAction.Delete -> performDeletion()
             is CalculatorAction.Percent -> applyPercent()
