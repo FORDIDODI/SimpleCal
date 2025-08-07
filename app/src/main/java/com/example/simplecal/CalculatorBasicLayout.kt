@@ -29,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.example.simplecal.ui.theme.MediumGray
@@ -74,11 +73,12 @@ fun CalculatorBasicLayout(
             .background(MediumGray)
             .windowInsetsPadding(WindowInsets.navigationBars)
     ) {
-        // Main calculator (always takes full width)
+        // Main calculator (takes full width when scientific panel is hidden)
         Box(
             modifier = Modifier
                 .fillMaxWidth(if (showScientific) 0.7f else 1f)
                 .fillMaxHeight()
+                .align(Alignment.CenterStart)
         ) {
             Calculator(
                 state = state,
@@ -96,9 +96,9 @@ fun CalculatorBasicLayout(
         if (showScientific) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxWidth(0.3f)
                     .fillMaxHeight()
-                    .padding(start = 0.7f.dp.times(LocalDensity.current.density * LocalConfiguration.current.screenWidthDp))
+                    .align(Alignment.CenterEnd)
                     .background(
                         color = Color(0xFF1E1E1E),
                         shape = RoundedCornerShape(

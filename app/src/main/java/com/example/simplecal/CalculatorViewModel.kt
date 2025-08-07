@@ -91,15 +91,12 @@ class CalculatorViewModel : ViewModel() {
                 }
             }
             is CalculatorAction.ToggleSign -> toggleSign()
-            is CalculatorAction.Sqrt -> applySqrt()
-            is CalculatorAction.Square -> applySquare()
-            is CalculatorAction.Reciprocal -> applyReciprocal()
-            is CalculatorAction.NumberPi -> enterPi()
-            is CalculatorAction.Sin -> applyTrig("sin")
-            is CalculatorAction.Cos -> applyTrig("cos")
-            is CalculatorAction.Tan -> applyTrig("tan")
-            is CalculatorAction.Log -> applyLog()
-            is CalculatorAction.Ln -> applyLn()
+            is CalculatorAction.Sin -> appendFunction("sin(")
+            is CalculatorAction.Cos -> appendFunction("cos(")
+            is CalculatorAction.Tan -> appendFunction("tan(")
+            is CalculatorAction.Log -> appendFunction("log(")
+            is CalculatorAction.Ln -> appendFunction("ln(")
+            is CalculatorAction.Sqrt -> appendFunction("√(")
             is CalculatorAction.Exp -> applyExp()
             is CalculatorAction.Factorial -> applyFactorial()
             is CalculatorAction.Power -> applyPower()
@@ -107,6 +104,9 @@ class CalculatorViewModel : ViewModel() {
             is CalculatorAction.Parentheses -> handleParentheses()
             is CalculatorAction.CloseParenthesis -> handleCloseParenthesis()
             is CalculatorAction.Cube -> applyCube()
+            is CalculatorAction.Square -> applySquare()
+            is CalculatorAction.Reciprocal -> applyReciprocal()
+            is CalculatorAction.NumberPi -> enterPi()
             else -> {}
         }
     }
@@ -189,26 +189,44 @@ class CalculatorViewModel : ViewModel() {
     }
 
     private fun evaluateExpression(expression: String): Double {
-        // First, handle percentages
-        var expr = expression.replace("%", "/100")
-        
-        // Handle negative numbers by adding 0 before negative signs that are at the start or after an operator
-        expr = expr.replace(Regex("(?<=[+\\-×x/÷(]|^)(?=-\\d)"), "0")
-        
-        // Handle percentage calculations first
-        val processedExpression = if ('%' in expr) {
-            val parts = expr.split('+')
-            if (parts.size == 2 && parts[1].trim().endsWith('%')) {
-                val base = parts[0].trim().toDoubleOrNull() ?: 0.0
-                val percent = parts[1].trim().removeSuffix("%").toDoubleOrNull() ?: 0.0
-                return base * (1 + percent / 100)
-            }
-            expr.replace("%", "").toDoubleOrNull()?.div(100)?.toString() ?: expr
-        } else {
-            expr
-        }
+        try {
+            var expr = expression
+                .replace(" ", "")  // Remove all spaces
+                .replace(Regex("π"), Math.PI.toString())
+                .replace(Regex("e"), Math.E.toString())
+                .replace(Regex("φ"), "1.618033988749895")  // Golden ratio
+                .replace(Regex("%"), "/100")
+                // Handle x² by converting to ^2 without extra parentheses
+                .replace(Regex("\\u00B2"), "^2")
+                // Handle 1/x by converting to (1/x) with proper grouping
+                .replace(Regex("1/([\\d.]+(?:[eE][-+]?\\d+)?)"), "(1/$1)")
 
-        val tokens = tokenize(processedExpression)
+            // Handle power operations (^) with proper operator precedence
+            while (true) {
+                val powerMatch = Regex("(-?[\\d.]+(?:[eE][-+]?\\d+)?)\\^(-?[\\d.]+(?:[eE][-+]?\\d+)?)").find(expr) ?: break
+                val base = powerMatch.groupValues[1].toDouble()
+                val exponent = powerMatch.groupValues[2].toDouble()
+                val result = Math.pow(base, exponent)
+                // Replace just the matched part without adding parentheses
+                expr = expr.replaceRange(powerMatch.range, result.toString())
+            }
+
+            // Handle negative numbers after power operations
+            expr = expr.replace(Regex("(?<=[+\\-×/^(]|^)-"), "0-")
+            // Handle remaining simple expressions
+            return evaluateSimpleExpression(expr)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw IllegalArgumentException("Invalid expression")
+        }
+    }
+
+    private fun evaluateSimpleExpression(expr: String): Double {
+        // Handle basic arithmetic and constants
+        var expression = expr
+
+        // Tokenize and evaluate the expression
+        val tokens = tokenize(expression)
         return evaluateTokens(tokens)
     }
 
@@ -285,16 +303,9 @@ class CalculatorViewModel : ViewModel() {
         stack.add(result)
     }
 
-    private fun enterDecimal() {
-        val currentNumber = if (state.operation == null) state.number1 else state.number2
-        if (!currentNumber.contains(".")) {
-            if (currentNumber.isEmpty()) {
-                currentInput += "0."
-            } else {
-                currentInput += "."
-            }
-            updateStateFromText(currentInput)
-        }
+    private fun appendFunction(functionName: String) {
+        currentInput += functionName
+        updateStateFromText(currentInput)
     }
 
     private fun applyExp() {
@@ -306,59 +317,6 @@ class CalculatorViewModel : ViewModel() {
         } else {
             val number = state.number2.toDoubleOrNull() ?: 0.0
             val result = exp(number)
-            currentInput = state.number1 + state.operation?.symbol + result.toString()
-            state = state.copy(number2 = result.toString())
-        }
-    }
-
-    private fun applyLog() {
-        currentInput += "log("
-        state = state.copy(
-            number1 = if (state.operation == null) currentInput else state.number1,
-            expression = currentInput
-        )
-    }
-
-    private fun applyTrig(type: String) {
-        currentInput += "$type("
-        state = state.copy(
-            number1 = if (state.operation == null) currentInput else state.number1,
-            expression = currentInput
-        )
-    }
-
-    private fun applySqrt() {
-        currentInput += "√("
-        state = state.copy(
-            number1 = if (state.operation == null) currentInput else state.number1,
-            expression = currentInput
-        )
-    }
-
-    private fun applyLn() {
-        if (state.operation == null) {
-            val number = state.number1.toDoubleOrNull() ?: 0.0
-            val result = if (number > 0) ln(number) else Double.NaN
-            currentInput = result.toString()
-            state = state.copy(number1 = currentInput, number2 = "", operation = null)
-        } else {
-            val number = state.number2.toDoubleOrNull() ?: 0.0
-            val result = if (number > 0) ln(number) else Double.NaN
-            currentInput = state.number1 + state.operation?.symbol + result.toString()
-            state = state.copy(number2 = result.toString())
-        }
-    }
-
-    private fun applyPercent() {
-        if (state.operation == null) {
-            val number = state.number1.toDoubleOrNull() ?: 0.0
-            val result = number / 100
-            currentInput = result.toString()
-            state = state.copy(number1 = currentInput, number2 = "", operation = null)
-        } else {
-            val number = state.number2.toDoubleOrNull() ?: 0.0
-            val percentage = state.number1.toDoubleOrNull() ?: 0.0
-            val result = percentage * (number / 100)
             currentInput = state.number1 + state.operation?.symbol + result.toString()
             state = state.copy(number2 = result.toString())
         }
@@ -379,35 +337,43 @@ class CalculatorViewModel : ViewModel() {
     }
 
     private fun applySquare() {
-        if (state.operation == null) {
-            val number = state.number1.toDoubleOrNull() ?: 0.0
-            val result = number * number
-            currentInput = result.toString()
-            state = state.copy(number1 = currentInput, number2 = "", operation = null)
-        } else {
-            val number = state.number2.toDoubleOrNull() ?: 0.0
-            val result = number * number
-            currentInput = state.number1 + state.operation?.symbol + result.toString()
-            state = state.copy(number2 = result.toString())
+        if (currentInput.isEmpty()) {
+            currentInput = "0"
+        }
+        
+        // If the last character is a digit, add the square operation
+        if (currentInput.lastOrNull()?.isDigit() == true || currentInput.lastOrNull() == ')') {
+            currentInput = "($currentInput)²"
+            updateStateFromText(currentInput)
+        }
+        // If we have an operation and number2 is not empty, square the second number
+        else if (state.operation != null && state.number2.isNotEmpty()) {
+            currentInput = "${state.number1}${state.operation?.symbol}(${state.number2})²"
+            updateStateFromText(currentInput)
         }
     }
 
     private fun applyReciprocal() {
-        if (state.operation == null) {
-            val number = state.number1.toDoubleOrNull() ?: 0.0
-            val result = if (number != 0.0) 1.0 / number else Double.POSITIVE_INFINITY
-            currentInput = result.toString()
-            state = state.copy(number1 = currentInput, number2 = "", operation = null)
-        } else {
-            val number = state.number2.toDoubleOrNull() ?: 0.0
-            val result = if (number != 0.0) 1.0 / number else Double.POSITIVE_INFINITY
-            currentInput = state.number1 + state.operation?.symbol + result.toString()
-            state = state.copy(number2 = result.toString())
+        if (currentInput.isEmpty()) {
+            currentInput = "1/"
+            updateStateFromText(currentInput)
+            return
+        }
+        
+        // If we have a number, wrap it in parentheses and add 1/
+        if (currentInput.lastOrNull()?.isDigit() == true || currentInput.lastOrNull() == ')') {
+            currentInput = "1/($currentInput)"
+            updateStateFromText(currentInput)
+        }
+        // If we have an operation and number2 is not empty, take reciprocal of the second number
+        else if (state.operation != null && state.number2.isNotEmpty()) {
+            currentInput = "${state.number1}${state.operation?.symbol}1/(${state.number2})"
+            updateStateFromText(currentInput)
         }
     }
 
     private fun enterPi() {
-        val piValue = "3.141592653589793"
+        val piValue = "π"
         if (state.operation == null) {
             currentInput = piValue
             state = state.copy(number1 = piValue, number2 = "", operation = null)

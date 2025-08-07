@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,38 +25,20 @@ fun ScientificButton(
     isHighlighted: Boolean = false,
     onClick: () -> Unit
 ) {
-    val buttonColor = if (isHighlighted) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        Color.Black
-    }
-    
-    val borderColor = if (isHighlighted) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        Color.Yellow
-    }
-    
-    val textColor = if (isHighlighted) {
-        MaterialTheme.colorScheme.onPrimary
-    } else {
-        Color.White
-    }
+    val textColor = MaterialTheme.colorScheme.onSurface
     
     Box(
+        contentAlignment = Alignment.Center,
         modifier = modifier
-            .width(60.dp)
-            .height(60.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(buttonColor)
+            .clip(CircleShape)
+            .background(Color.Transparent)
             .border(
                 width = 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(8.dp)
+                color = if (isHighlighted) MaterialTheme.colorScheme.primary else Color.Transparent,
+                shape = CircleShape
             )
             .clickable(onClick = onClick)
-            .padding(4.dp),
-        contentAlignment = Alignment.Center
+            .padding(4.dp)
     ) {
         Text(
             text = symbol,
