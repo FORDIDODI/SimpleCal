@@ -10,6 +10,8 @@ sealed class CalculatorAction {
     object ToggleSign: CalculatorAction()
     data class Operation(val operation: CalculatorOperation): CalculatorAction()
     object Parentheses: CalculatorAction()
+    object ClearHistory: CalculatorAction()
+    data class LoadFromHistory(val entry: String) : CalculatorAction()
 
     //Tambahan buat scientific part nya
     object Sqrt: CalculatorAction()

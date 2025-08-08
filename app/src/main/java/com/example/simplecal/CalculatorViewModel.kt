@@ -41,6 +41,19 @@ class CalculatorViewModel : ViewModel() {
                     updateStateFromText(currentInput)
                 }
             }
+            is CalculatorAction.Clear -> {
+                currentInput = ""
+                state = CalculatorState()
+            }
+            is CalculatorAction.ClearHistory -> {
+                history.value = emptyList()
+            }
+            is CalculatorAction.LoadFromHistory -> {
+                // Extract just the result part from the history entry (part after '=')
+                val result = action.entry.split(" = ").lastOrNull() ?: ""
+                currentInput = result
+                updateStateFromText(currentInput)
+            }
             is CalculatorAction.Parenthesis -> {
                 currentInput += action.symbol
                 updateStateFromText(currentInput)
@@ -48,22 +61,45 @@ class CalculatorViewModel : ViewModel() {
             is CalculatorAction.Operation -> {
                 if (currentInput.isNotEmpty()) {
                     val lastChar = currentInput.lastOrNull()
-                    if (lastChar != null && (lastChar.isDigit() || lastChar == ')')) {
+                    // If last character is an operator, replace it
+                    if (lastChar in listOf('+', '-', '×', 'x', '/', '÷', '^')) {
+                        currentInput = currentInput.dropLast(1) + action.operation.symbol
+                    } else {
                         currentInput += action.operation.symbol
-                    } else if (lastChar != null && lastChar in "+-*/×÷") {
-                        if (currentInput.length > 1 && currentInput.getOrNull(currentInput.length - 2) != '(') {
-                            currentInput = currentInput.dropLast(1) + action.operation.symbol
-                        }
                     }
                     updateStateFromText(currentInput)
                 }
             }
-            is CalculatorAction.Clear -> {
-                state = CalculatorState()
-                currentInput = ""
+            is CalculatorAction.Calculate -> {
+                try {
+                    val result = evaluateExpression(currentInput)
+                    val expressionText = "$currentInput = $result"
+                    history.value = listOf(expressionText) + history.value.take(19) // Keep last 20 entries
+                    currentInput = result.toString()
+                    state = state.copy(
+                        number1 = currentInput,
+                        number2 = "",
+                        operation = null,
+                        openParentheses = 0,
+                        expression = currentInput
+                    )
+                } catch (e: Exception) {
+                    currentInput = ""
+                    state = state.copy(
+                        number1 = "Error",
+                        number2 = "",
+                        operation = null,
+                        openParentheses = 0,
+                        expression = ""
+                    )
+                }
             }
-            is CalculatorAction.Calculate -> performCalculation()
-            is CalculatorAction.Delete -> performDeletion()
+            is CalculatorAction.Delete -> {
+                if (currentInput.isNotEmpty()) {
+                    currentInput = currentInput.dropLast(1)
+                    updateStateFromText(currentInput)
+                }
+            }
             is CalculatorAction.Percent -> {
                 if (currentInput.isEmpty()) return@onAction
 

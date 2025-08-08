@@ -2,6 +2,7 @@ package com.example.simplecal
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,15 +16,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material.icons.filled.Backspace
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -39,13 +52,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.simplecal.ui.theme.LightGray
 import com.example.simplecal.ui.theme.Orange
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Backspace
-import androidx.compose.material3.Icon
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.border
 
 // Fungsi untuk mengurai text yang diedit dan mengupdate state
 private fun parseAndUpdateStateFromText(text: String, viewModel: CalculatorViewModel) {
@@ -71,19 +77,103 @@ fun Calculator(
             verticalArrangement = Arrangement.spacedBy(buttonSpacing)
         ) {
             // History
-            LazyColumn(
+            var isHistoryExpanded by remember { mutableStateOf(false) }
+            
+            // Clear history function
+            val clearHistory = {
+                // We'll add a ClearHistory action to the ViewModel
+                onAction(CalculatorAction.ClearHistory)
+            }
+            
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.5f),
-                reverseLayout = true
+                    .weight(if (isHistoryExpanded) 0.7f else 0.3f)
+                    .padding(horizontal = 8.dp)
             ) {
-                items(history) { entry ->
+                // History header with clear button
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
-                        text = entry,
+                        text = "History",
                         color = Color.LightGray,
-                        fontSize = 18.sp,
-                        modifier = Modifier.padding(vertical = 2.dp)
+                        fontSize = 16.sp
                     )
+                    
+                    Row {
+                        // Expand/collapse button
+                        IconButton(
+                            onClick = { isHistoryExpanded = !isHistoryExpanded },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isHistoryExpanded) Icons.Filled.ArrowDropUp else Icons.Filled.ArrowDropDown,
+                                contentDescription = if (isHistoryExpanded) "Collapse" else "Expand",
+                                tint = Color.LightGray,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        
+                        // Clear history button
+                        if (history.isNotEmpty()) {
+                            IconButton(
+                                onClick = clearHistory,
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Clear,
+                                    contentDescription = "Clear History",
+                                    tint = Color.Red,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                // History list
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    reverseLayout = true
+                ) {
+                    items(history) { entry ->
+                        // Split the entry into expression and result
+                        val parts = entry.split(" = ")
+                        val expression = parts.getOrNull(0) ?: ""
+                        val result = parts.getOrNull(1) ?: ""
+                        
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    // When clicked, load the result into the input
+                                    onAction(CalculatorAction.LoadFromHistory(entry))
+                                }
+                                .padding(vertical = 4.dp)
+                        ) {
+                            if (expression.isNotEmpty()) {
+                                Text(
+                                    text = expression,
+                                    color = Color.LightGray,
+                                    fontSize = 14.sp,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                            if (result.isNotEmpty()) {
+                                Text(
+                                    text = "= $result",
+                                    color = Color.White,
+                                    fontSize = 18.sp,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
