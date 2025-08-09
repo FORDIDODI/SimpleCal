@@ -4,6 +4,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.simplecal.ui.theme.ThemeMode
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.pow
@@ -13,15 +19,28 @@ class CalculatorViewModel : ViewModel() {
     var state by mutableStateOf(CalculatorState())
         private set
 
-    val history = mutableStateOf<List<String>>(emptyList())
+    private val _history = MutableStateFlow<List<String>>(emptyList())
+    val history = _history.asStateFlow()
 
     var isScientificMode by mutableStateOf(false)
         private set
 
+    private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
+    val themeMode = _themeMode.asStateFlow()
+
     var currentInput by mutableStateOf("")
+        private set
 
     fun toggleScientificMode() {
         isScientificMode = !isScientificMode
+    }
+
+    fun updateTheme(newTheme: ThemeMode) {
+        viewModelScope.launch {
+            _themeMode.emit(newTheme)
+            // Here you can add code to save the theme preference
+            // using DataStore or SharedPreferences
+        }
     }
 
     fun onAction(action: CalculatorAction) {
@@ -46,7 +65,7 @@ class CalculatorViewModel : ViewModel() {
                 state = CalculatorState()
             }
             is CalculatorAction.ClearHistory -> {
-                history.value = emptyList()
+                _history.value = emptyList()
             }
             is CalculatorAction.LoadFromHistory -> {
                 // Extract just the result part from the history entry (part after '=')
@@ -74,7 +93,7 @@ class CalculatorViewModel : ViewModel() {
                 try {
                     val result = evaluateExpression(currentInput)
                     val expressionText = "$currentInput = $result"
-                    history.value = listOf(expressionText) + history.value.take(19) // Keep last 20 entries
+                    _history.value = listOf(expressionText) + _history.value.take(19) // Keep last 20 entries
                     currentInput = result.toString()
                     state = state.copy(
                         number1 = currentInput,
@@ -202,7 +221,7 @@ class CalculatorViewModel : ViewModel() {
         try {
             val result = evaluateExpression(currentInput)
             val expressionText = "$currentInput = $result"
-            history.value = listOf(expressionText) + history.value.take(9)
+            _history.value = listOf(expressionText) + _history.value.take(9)
             currentInput = result.toString().take(15)
             // Update state but keep the full expression for display
             state = state.copy(

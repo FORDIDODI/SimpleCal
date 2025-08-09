@@ -3,6 +3,7 @@ package com.example.simplecal
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,10 +24,19 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.Backspace
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Functions
+import androidx.compose.material.icons.filled.KeyboardReturn
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,7 +48,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.TextRange
@@ -50,14 +58,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.simplecal.ui.theme.LightGray
-import com.example.simplecal.ui.theme.Orange
+import com.example.simplecal.ui.theme.LocalTheme
+import com.example.simplecal.ui.theme.ThemeMode
 
 // Fungsi untuk mengurai text yang diedit dan mengupdate state
 private fun parseAndUpdateStateFromText(text: String, viewModel: CalculatorViewModel) {
     viewModel.updateStateFromText(text)
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Calculator(
     state: CalculatorState,
@@ -69,22 +78,100 @@ fun Calculator(
     onToggleScientific: () -> Unit,
     isScientificMode: Boolean = false
 ) {
-    Box(modifier = modifier.fillMaxSize()) {
+    val themeState = LocalTheme.current
+    var showThemeMenu by remember { mutableStateOf(false) }
+    var isHistoryExpanded by remember { mutableStateOf(false) }
+    
+    // Clear history function
+    val clearHistory = {
+        // We'll add a ClearHistory action to the ViewModel
+        onAction(CalculatorAction.ClearHistory)
+    }
+    
+    Column(
+        modifier = modifier.fillMaxSize()
+    ) {
+        // Top App Bar with Theme Toggle
+        TopAppBar(
+            title = { Text("Calculator") },
+            actions = {
+                // Theme Toggle Button
+                Box {
+                    IconButton(onClick = { showThemeMenu = !showThemeMenu }) {
+                        Icon(
+                            imageVector = when (themeState.theme) {
+                                ThemeMode.DARK -> Icons.Filled.LightMode
+                                ThemeMode.LIGHT -> Icons.Filled.DarkMode
+                                ThemeMode.SYSTEM -> if (isSystemInDarkTheme()) Icons.Filled.LightMode else Icons.Filled.DarkMode
+                            },
+                            contentDescription = "Toggle Theme"
+                        )
+                    }
+                    
+                    // Theme Selection Dropdown
+                    DropdownMenu(
+                        expanded = showThemeMenu,
+                        onDismissRequest = { showThemeMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Light") },
+                            onClick = {
+                                themeState.updateTheme(ThemeMode.LIGHT)
+                                showThemeMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Filled.LightMode,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Dark") },
+                            onClick = {
+                                themeState.updateTheme(ThemeMode.DARK)
+                                showThemeMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Filled.DarkMode,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("System Default") },
+                            onClick = {
+                                themeState.updateTheme(ThemeMode.SYSTEM)
+                                showThemeMenu = false
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Filled.Settings,
+                                    contentDescription = null
+                                )
+                            }
+                        )
+                    }
+                }
+                
+                // Scientific Mode Toggle
+                IconButton(onClick = onToggleScientific) {
+                    Icon(
+                        imageVector = if (isScientificMode) Icons.Filled.KeyboardReturn else Icons.Filled.Functions,
+                        contentDescription = if (isScientificMode) "Basic Mode" else "Scientific Mode"
+                    )
+                }
+            }
+        )
+        
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .align(Alignment.BottomCenter),
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(buttonSpacing)
         ) {
             // History
-            var isHistoryExpanded by remember { mutableStateOf(false) }
-            
-            // Clear history function
-            val clearHistory = {
-                // We'll add a ClearHistory action to the ViewModel
-                onAction(CalculatorAction.ClearHistory)
-            }
-            
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -92,19 +179,21 @@ fun Calculator(
                     .padding(horizontal = 8.dp)
             ) {
                 // History header with clear button
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                Box(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "History",
-                        color = Color.LightGray,
-                        fontSize = 16.sp
-                    )
-                    
-                    Row {
-                        // Expand/collapse button
+                    // Left side: History title and expand/collapse button
+                    Row(
+                        modifier = Modifier.align(Alignment.CenterStart),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "History",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontSize = 16.sp
+                        )
+                        
+                        // Expand/Collapse button
                         IconButton(
                             onClick = { isHistoryExpanded = !isHistoryExpanded },
                             modifier = Modifier.size(24.dp)
@@ -112,25 +201,25 @@ fun Calculator(
                             Icon(
                                 imageVector = if (isHistoryExpanded) Icons.Filled.ArrowDropUp else Icons.Filled.ArrowDropDown,
                                 contentDescription = if (isHistoryExpanded) "Collapse" else "Expand",
-                                tint = Color.LightGray,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
-                        
-                        // Clear history button
-                        if (history.isNotEmpty()) {
-                            IconButton(
-                                onClick = clearHistory,
-                                modifier = Modifier.size(24.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Clear,
-                                    contentDescription = "Clear History",
-                                    tint = Color.Red,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
+                    }
+                    
+                    // Right side: Clear history button
+                    IconButton(
+                        onClick = clearHistory,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .align(Alignment.CenterEnd)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Clear,
+                            contentDescription = "Clear History",
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                 }
                 
@@ -159,7 +248,7 @@ fun Calculator(
                             if (expression.isNotEmpty()) {
                                 Text(
                                     text = expression,
-                                    color = Color.LightGray,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontSize = 14.sp,
                                     modifier = Modifier.fillMaxWidth()
                                 )
@@ -167,7 +256,7 @@ fun Calculator(
                             if (result.isNotEmpty()) {
                                 Text(
                                     text = "= $result",
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     fontSize = 18.sp,
                                     modifier = Modifier.fillMaxWidth()
                                 )
@@ -195,7 +284,7 @@ fun Calculator(
                     parseAndUpdateStateFromText(newValue.text, viewModel)
                 },
                 textStyle = androidx.compose.ui.text.TextStyle(
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 36.sp,
                     fontWeight = FontWeight.Light,
                     textAlign = TextAlign.End
@@ -206,7 +295,7 @@ fun Calculator(
                     .padding(horizontal = 8.dp, vertical = 4.dp)
                     .focusRequester(focusRequester),
                 singleLine = true,
-                cursorBrush = SolidColor(Color.Green)
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
             )
 
             // Toggle and Delete buttons row
@@ -224,14 +313,14 @@ fun Calculator(
                         .clickable { onToggleScientific() }
                         .border(
                             width = 1.dp,
-                            color = if (isScientificMode) Color.Yellow else Color.Transparent,
+                            color = if (isScientificMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
                             shape = CircleShape
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "Sci",
-                        color = if (isScientificMode) Color.Yellow else Color.White,
+                        color = if (isScientificMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 16.sp
                     )
                 }
@@ -244,7 +333,7 @@ fun Calculator(
                         .clickable { onAction(CalculatorAction.Delete) }
                         .border(
                             width = 1.dp,
-                            color = Color.Yellow,
+                            color = MaterialTheme.colorScheme.error,
                             shape = CircleShape
                         ),
                     contentAlignment = Alignment.Center
@@ -252,7 +341,7 @@ fun Calculator(
                     Icon(
                         imageVector = Icons.Filled.Backspace,
                         contentDescription = "Delete",
-                        tint = Color.White,
+                        tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -311,9 +400,9 @@ fun Calculator(
                         val label = buttons.getOrNull(row)?.getOrNull(col) ?: ""
                         val action = actions.getOrNull(row)?.getOrNull(col) ?: {}
                         val color = when (label) {
-                            "C" -> LightGray
-                            "%", "/", "x", "-", "+", "=" -> Orange
-                            else -> Color.DarkGray
+                            "C" -> MaterialTheme.colorScheme.surfaceVariant
+                            "%", "/", "x", "-", "+", "=" -> MaterialTheme.colorScheme.primary
+                            else -> MaterialTheme.colorScheme.surfaceVariant
                         }
                         if (label.isNotEmpty()) {
                             CalculatorButton(

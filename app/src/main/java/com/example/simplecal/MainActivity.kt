@@ -4,27 +4,42 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.simplecal.ui.theme.SimpleCalTheme
+import com.example.simplecal.ui.theme.AppTheme
+import com.example.simplecal.ui.theme.ThemeMode
+import com.example.simplecal.ui.theme.rememberThemeState
 import net.objecthunter.exp4j.ExpressionBuilder
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
         setContent {
-            SimpleCalTheme {
-                val viewModel = viewModel<CalculatorViewModel>()
+            val viewModel = viewModel<CalculatorViewModel>()
+            val themeMode by viewModel.themeMode.collectAsState(initial = ThemeMode.SYSTEM)
+            
+            val themeState = rememberThemeState(
+                initialTheme = themeMode,
+                onThemeUpdated = { newTheme ->
+                    viewModel.updateTheme(newTheme)
+                }
+            )
+            
+            AppTheme(themeState = themeState) {
                 val state = viewModel.state
-                val history = viewModel.history.value
+                val history = viewModel.history.collectAsState(initial = emptyList())
                 val isScientificMode = viewModel.isScientificMode
                 val configuration = LocalConfiguration.current
 
                 if (isScientificMode) {
                     CalculatorScientificLayout(
                         state = state,
-                        history = history,
+                        history = history.value,
                         onAction = viewModel::onAction,
                         onToggleMode = { viewModel.toggleScientificMode() },
                         viewModel = viewModel
@@ -32,7 +47,7 @@ class MainActivity : ComponentActivity() {
                 } else {
                     CalculatorBasicLayout(
                         state = state,
-                        history = history,
+                        history = history.value,
                         onAction = viewModel::onAction,
                         onToggleMode = { viewModel.toggleScientificMode() },
                         viewModel = viewModel
@@ -48,40 +63,7 @@ fun evaluateExpression(expression: String): Double {
 }
 
 fun evaluateSimpleExpression(expr: String): Double {
-    val tokens = Regex("(?<=[-+*/])|(?=[-+*/])").split(expr).map { it.trim() }
-    val numbers = mutableListOf<Double>()
-    val operators = mutableListOf<String>()
-
-    var i = 0
-    while (i < tokens.size) {
-        val token = tokens[i]
-        if (token in listOf("+", "-", "*", "/")) {
-            operators.add(token)
-        } else {
-            numbers.add(token.toDouble())
-        }
-        i++
-    }
-
-    // Proses *, /
-    var idx = 0
-    while (idx < operators.size) {
-        if (operators[idx] == "*" || operators[idx] == "/") {
-            val left = numbers[idx]
-            val right = numbers[idx + 1]
-            val result = if (operators[idx] == "*") left * right else left / right
-            numbers[idx] = result
-            numbers.removeAt(idx + 1)
-            operators.removeAt(idx)
-        } else {
-            idx++
-        }
-    }
-
-    // Proses +, -
-    var result = numbers[0]
-    for (j in operators.indices) {
-        result = if (operators[j] == "+") result + numbers[j + 1] else result - numbers[j + 1]
-    }
-    return result
+    return ExpressionBuilder(expr)
+        .build()
+        .evaluate()
 }
