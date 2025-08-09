@@ -13,6 +13,8 @@ import kotlinx.coroutines.launch
 import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.pow
+import net.objecthunter.exp4j.ExpressionBuilder
+
 
 class CalculatorViewModel : ViewModel() {
 
@@ -255,6 +257,31 @@ class CalculatorViewModel : ViewModel() {
                 .replace(Regex("\\u00B2"), "^2")
                 // Handle 1/x by converting to (1/x) with proper grouping
                 .replace(Regex("1/([\\d.]+(?:[eE][-+]?\\d+)?)"), "(1/$1)")
+                // Replace × with * and ÷ with /
+                .replace(Regex("×|x"), "*")
+                .replace("÷", "/")
+                // Handle scientific functions
+                .replace(Regex("sin\\(([^)]+)\\)"), { match -> 
+                    val angle = Math.toRadians(match.groupValues[1].toDouble())
+                    Math.sin(angle).toString()
+                })
+                .replace(Regex("cos\\(([^)]+)\\)"), { match ->
+                    val angle = Math.toRadians(match.groupValues[1].toDouble())
+                    Math.cos(angle).toString()
+                })
+                .replace(Regex("tan\\(([^)]+)\\)"), { match ->
+                    val angle = Math.toRadians(match.groupValues[1].toDouble())
+                    Math.tan(angle).toString()
+                })
+                .replace(Regex("log\\(([^)]+)\\)"), { match ->
+                    Math.log10(match.groupValues[1].toDouble()).toString()
+                })
+                .replace(Regex("ln\\(([^)]+)\\)"), { match ->
+                    Math.log(match.groupValues[1].toDouble()).toString()
+                })
+                .replace(Regex("√\\(([^)]+)\\)"), { match ->
+                    Math.sqrt(match.groupValues[1].toDouble()).toString()
+                })
 
             // Handle power operations (^) with proper operator precedence
             while (true) {
@@ -267,9 +294,10 @@ class CalculatorViewModel : ViewModel() {
             }
 
             // Handle negative numbers after power operations
-            expr = expr.replace(Regex("(?<=[+\\-×/^(]|^)-"), "0-")
-            // Handle remaining simple expressions
-            return evaluateSimpleExpression(expr)
+            expr = expr.replace(Regex("(?<=[+\\-*/^(]|^)-"), "0-")
+            
+            // Evaluate the final expression
+            return ExpressionBuilder(expr).build().evaluate()
         } catch (e: Exception) {
             e.printStackTrace()
             throw IllegalArgumentException("Invalid expression")
