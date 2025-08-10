@@ -4,16 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -25,24 +21,27 @@ fun ScientificButton(
     isHighlighted: Boolean = false,
     onClick: () -> Unit
 ) {
-    val textColor = MaterialTheme.colorScheme.onSurface
+    val buttonColor = Color.DarkGray
+    val textColor = MaterialTheme.colorScheme.onPrimaryContainer
     
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .clip(CircleShape)
-            .background(Color.Transparent)
+            .background(
+                color = buttonColor,
+                shape = MaterialTheme.shapes.small
+            )
             .border(
                 width = 1.dp,
                 color = if (isHighlighted) MaterialTheme.colorScheme.primary else Color.Transparent,
-                shape = CircleShape
+                shape = MaterialTheme.shapes.small
             )
             .clickable(onClick = onClick)
-            .padding(4.dp)
+            .padding(8.dp)
     ) {
         Text(
             text = symbol,
-            fontSize = 20.sp,
+            fontSize = 18.sp,
             color = textColor,
             maxLines = 1
         )
