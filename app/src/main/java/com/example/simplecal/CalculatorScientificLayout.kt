@@ -17,12 +17,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Data class for scientific function buttons
-data class ScientificFunction(
-    val symbol: String,
-    val action: CalculatorAction
-)
-
 @Composable
 fun CalculatorScientificLayout(
     state: CalculatorState,
@@ -31,29 +25,21 @@ fun CalculatorScientificLayout(
     onToggleMode: () -> Unit,
     viewModel: CalculatorViewModel
 ) {
-    // This layout will now be responsible for providing the scientific functions
-    // to the basic layout, which will handle the UI display.
-    val scientificFunctions = listOf(
-        ScientificFunction("ln", CalculatorAction.Ln),
-        ScientificFunction("log", CalculatorAction.Log),
-        ScientificFunction("sin", CalculatorAction.Sin),
-        ScientificFunction("cos", CalculatorAction.Cos),
-        ScientificFunction("tan", CalculatorAction.Tan),
-        ScientificFunction("e", CalculatorAction.E),
-        ScientificFunction("π", CalculatorAction.Pi),
-        ScientificFunction("√", CalculatorAction.Sqrt),
-        ScientificFunction("x²", CalculatorAction.Square),
-        ScientificFunction("x³", CalculatorAction.Cube),
-        ScientificFunction("xʸ", CalculatorAction.Operation(CalculatorOperation.Power)),
-        ScientificFunction("x!", CalculatorAction.Factorial)
-    )
-
-    CalculatorBasicLayout(
+    Calculator(
         state = state,
         history = history,
         onAction = onAction,
-        onToggleMode = onToggleMode,
+        buttonSpacing = 4.dp,
+        modifier = Modifier.fillMaxSize(),
         viewModel = viewModel,
-        scientificFunctions = scientificFunctions
+        onToggleScientific = onToggleMode,
+        isScientificMode = true // Always true for the scientific layout
     )
 }
+
+// Data class for scientific function buttons
+data class ScientificFunction(
+    val symbol: String,
+    val action: CalculatorAction,
+    val description: String = ""
+)

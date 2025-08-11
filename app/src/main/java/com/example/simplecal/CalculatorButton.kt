@@ -15,41 +15,37 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.FontWeight
 
 @Composable
 fun CalculatorButton(
     symbol: String,
     modifier: Modifier = Modifier,
-    textColor: Color = Color.White,
     isDeleteButton: Boolean = false,
-    backgroundColor: Color = Color.Transparent,
     onClick: () -> Unit
 ) {
-    val buttonTextColor = if (isDeleteButton) {
+    val textColor = if (isDeleteButton) {
         MaterialTheme.colorScheme.onSurface
     } else {
-        textColor
+        MaterialTheme.colorScheme.onSurface
     }
     
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .clip(CircleShape)
-            .background(backgroundColor)
+            .background(Color.Transparent)
             .border(
                 width = if (isDeleteButton) 1.dp else 0.dp,
                 color = if (isDeleteButton) Color.Yellow else Color.Transparent,
                 shape = CircleShape
             )
-            .clickable { onClick() }
+            .clickable(onClick = onClick)
             .padding(4.dp)
     ) {
         Text(
             text = symbol,
-            fontSize = if (isDeleteButton) 28.sp else 32.sp,
-            color = buttonTextColor,
-            fontWeight = if (isDeleteButton) FontWeight.Normal else FontWeight.Normal,
+            fontSize = 28.sp,
+            color = textColor,
             maxLines = 1
         )
     }
