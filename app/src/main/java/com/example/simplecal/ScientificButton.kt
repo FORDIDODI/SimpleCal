@@ -21,8 +21,8 @@ fun ScientificButton(
     isHighlighted: Boolean = false,
     onClick: () -> Unit
 ) {
-    val buttonColor = Color.DarkGray
-    val textColor = MaterialTheme.colorScheme.onPrimaryContainer
+    val buttonColor = MaterialTheme.colorScheme.surfaceVariant
+    val textColor = MaterialTheme.colorScheme.onSurfaceVariant
     
     Box(
         contentAlignment = Alignment.Center,

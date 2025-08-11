@@ -30,27 +30,17 @@ class MainActivity : ComponentActivity() {
             )
             
             AppTheme(themeState = themeState) {
+                val viewModel = viewModel<CalculatorViewModel>()
                 val state = viewModel.state
-                val history = viewModel.history.collectAsState(initial = emptyList())
-                val isScientificMode = viewModel.isScientificMode
+                val history = viewModel.history.collectAsState(initial = emptyList()).value
 
-                if (isScientificMode) {
-                    CalculatorScientificLayout(
-                        state = state,
-                        history = history.value,
-                        onAction = viewModel::onAction,
-                        onToggleMode = { viewModel.toggleScientificMode() },
-                        viewModel = viewModel
-                    )
-                } else {
-                    CalculatorBasicLayout(
-                        state = state,
-                        history = history.value,
-                        onAction = viewModel::onAction,
-                        onToggleMode = { viewModel.toggleScientificMode() },
-                        viewModel = viewModel
-                    )
-                }
+                CalculatorBasicLayout(
+                    state = state,
+                    history = history,
+                    onAction = viewModel::onAction,
+                    onToggleMode = viewModel::toggleScientificMode,
+                    viewModel = viewModel
+                )
             }
         }
     }

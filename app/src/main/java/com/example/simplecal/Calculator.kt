@@ -72,334 +72,187 @@ private fun parseAndUpdateStateFromText(text: String, viewModel: CalculatorViewM
 fun Calculator(
     state: CalculatorState,
     history: List<String>,
-    buttonSpacing: Dp = 4.dp,
+    buttonSpacing: Dp = 8.dp,
     modifier: Modifier = Modifier,
     onAction: (CalculatorAction) -> Unit,
     viewModel: CalculatorViewModel,
     onToggleScientific: () -> Unit,
     isScientificMode: Boolean = false
 ) {
-    val themeState = LocalTheme.current
-    var showThemeMenu by remember { mutableStateOf(false) }
-    var isHistoryExpanded by remember { mutableStateOf(false) }
-    
-    // Clear history function
-    val clearHistory = {
-        // We'll add a ClearHistory action to the ViewModel
-        onAction(CalculatorAction.ClearHistory)
-    }
-    
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFF1E1E1E))
+            .padding(16.dp)
     ) {
-        // Top App Bar with Theme Toggle
-        TopAppBar(
-            title = { Text("Calculator") },
-            actions = {
-                // Theme Toggle Button
-                Box {
-                    IconButton(onClick = { showThemeMenu = !showThemeMenu }) {
-                        Icon(
-                            imageVector = when (themeState.theme) {
-                                ThemeMode.DARK -> Icons.Filled.LightMode
-                                ThemeMode.LIGHT -> Icons.Filled.DarkMode
-                                ThemeMode.SYSTEM -> if (isSystemInDarkTheme()) Icons.Filled.LightMode else Icons.Filled.DarkMode
-                            },
-                            contentDescription = "Toggle Theme"
-                        )
-                    }
-                    
-                    // Theme Selection Dropdown
-                    DropdownMenu(
-                        expanded = showThemeMenu,
-                        onDismissRequest = { showThemeMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Light") },
-                            onClick = {
-                                themeState.updateTheme(ThemeMode.LIGHT)
-                                showThemeMenu = false
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Filled.LightMode,
-                                    contentDescription = null
-                                )
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Dark") },
-                            onClick = {
-                                themeState.updateTheme(ThemeMode.DARK)
-                                showThemeMenu = false
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Filled.DarkMode,
-                                    contentDescription = null
-                                )
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("System Default") },
-                            onClick = {
-                                themeState.updateTheme(ThemeMode.SYSTEM)
-                                showThemeMenu = false
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Filled.Settings,
-                                    contentDescription = null
-                                )
-                            }
-                        )
-                    }
-                }
-                
-                // Scientific Mode Toggle
-                IconButton(onClick = onToggleScientific) {
-                    Icon(
-                        imageVector = if (isScientificMode) Icons.Filled.KeyboardReturn else Icons.Filled.Functions,
-                        contentDescription = if (isScientificMode) "Basic Mode" else "Scientific Mode"
-                    )
-                }
-            }
-        )
-        
+        // Display
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(2f)
+                .padding(vertical = 16.dp),
+            contentAlignment = Alignment.BottomEnd
+        ) {
+            Text(
+                text = state.number1 + (state.operation?.symbol ?: "") + state.number2.ifEmpty { "" },
+                color = Color.White,
+                fontSize = 64.sp,
+                fontWeight = FontWeight.Light,
+                textAlign = TextAlign.End,
+                maxLines = 1,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        // Buttons Grid
         Column(
             modifier = Modifier
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .fillMaxWidth()
+                .weight(5f),
             verticalArrangement = Arrangement.spacedBy(buttonSpacing)
         ) {
-            // History
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(if (isHistoryExpanded) 0.7f else 0.3f)
-                    .padding(horizontal = 8.dp)
-            ) {
-                // History header with clear button
-                Box(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    // Left side: History title and expand/collapse button
-                    Row(
-                        modifier = Modifier.align(Alignment.CenterStart),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "History",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 16.sp
-                        )
-                        
-                        // Expand/Collapse button
-                        IconButton(
-                            onClick = { isHistoryExpanded = !isHistoryExpanded },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (isHistoryExpanded) Icons.Filled.ArrowDropUp else Icons.Filled.ArrowDropDown,
-                                contentDescription = if (isHistoryExpanded) "Collapse" else "Expand",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                    
-                    // Right side: Clear history button
-                    IconButton(
-                        onClick = clearHistory,
-                        modifier = Modifier
-                            .size(24.dp)
-                            .align(Alignment.CenterEnd)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Clear,
-                            contentDescription = "Clear History",
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-                
-                // History list
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    reverseLayout = true
-                ) {
-                    items(history) { entry ->
-                        // Split the entry into expression and result
-                        val parts = entry.split(" = ")
-                        val expression = parts.getOrNull(0) ?: ""
-                        val result = parts.getOrNull(1) ?: ""
-                        
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    // When clicked, load the result into the input
-                                    onAction(CalculatorAction.LoadFromHistory(entry))
-                                }
-                                .padding(vertical = 4.dp)
-                        ) {
-                            if (expression.isNotEmpty()) {
-                                Text(
-                                    text = expression,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 14.sp,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                            if (result.isNotEmpty()) {
-                                Text(
-                                    text = "= $result",
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 18.sp,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Main input field
-            val focusRequester = remember { FocusRequester() }
-            val textFieldValue = remember { mutableStateOf(TextFieldValue("")) }
-            
-            LaunchedEffect(state.number1 + (state.operation?.symbol ?: "") + state.number2) {
-                textFieldValue.value = TextFieldValue(
-                    text = state.number1 + (state.operation?.symbol ?: "") + state.number2,
-                    selection = TextRange(textFieldValue.value.text.length)
-                )
-            }
-            
-            BasicTextField(
-                value = textFieldValue.value,
-                onValueChange = { newValue ->
-                    textFieldValue.value = newValue
-                    parseAndUpdateStateFromText(newValue.text, viewModel)
-                },
-                textStyle = androidx.compose.ui.text.TextStyle(
-                    color = Color.White,
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.Light,
-                    textAlign = TextAlign.End
-                ),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                    .focusRequester(focusRequester),
-                singleLine = true,
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
-            )
-
-            // Toggle and Delete buttons row
+            // Row 1: Clear, +/-, %, /
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 2.dp),
-                horizontalArrangement = Arrangement.End
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(buttonSpacing)
             ) {
-                // Delete button
-                Box(
+                CalculatorButton(
+                    symbol = "C",
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .clickable { onAction(CalculatorAction.Delete) }
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.error,
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Backspace,
-                        contentDescription = "Delete",
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                        .weight(1f)
+                        .aspectRatio(1f)
+                        .background(Color(0xFFA5A5A5), CircleShape),
+                    textColor = Color.Black,
+                    onClick = { onAction(CalculatorAction.Clear) }
+                )
+                CalculatorButton(
+                    symbol = "±",
+                    modifier = Modifier
+                        .weight(1f)
+                        .aspectRatio(1f)
+                        .background(Color(0xFFA5A5A5), CircleShape),
+                    textColor = Color.Black,
+                    onClick = { onAction(CalculatorAction.ToggleSign) }
+                )
+                CalculatorButton(
+                    symbol = "%",
+                    modifier = Modifier
+                        .weight(1f)
+                        .aspectRatio(1f)
+                        .background(Color(0xFFA5A5A5), CircleShape),
+                    textColor = Color.Black,
+                    onClick = { onAction(CalculatorAction.Percent) }
+                )
+                CalculatorButton(
+                    symbol = "÷",
+                    modifier = Modifier
+                        .weight(1f)
+                        .aspectRatio(1f)
+                        .background(Color(0xFFFF9F0A), CircleShape),
+                    textColor = Color.White,
+                    onClick = { onAction(CalculatorAction.Operation(CalculatorOperation.Divide)) }
+                )
             }
 
-            // Calculator buttons grid
-            val configuration = LocalConfiguration.current
-            val isPortrait = configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
-            val buttonRows = if (isPortrait) 5 else 4
-            val buttonCols = if (isPortrait) 4 else 5
-            val buttons = listOf(
-                listOf("C", "%", "()", "/"),
-                listOf("7", "8", "9", "x"),
-                listOf("4", "5", "6", "-"),
-                listOf("1", "2", "3", "+"),
-                listOf("±", "0", ".", "=")
+            // Rows for numbers 7-9, 4-6, 1-3
+            val numberRows = listOf(
+                listOf("7", "8", "9"),
+                listOf("4", "5", "6"),
+                listOf("1", "2", "3")
             )
-            val actions = listOf(
-                listOf(
-                    { onAction(CalculatorAction.Clear) },
-                    { onAction(CalculatorAction.Percent) },
-                    { onAction(CalculatorAction.Parentheses) },
-                    { onAction(CalculatorAction.Operation(CalculatorOperation.Divide)) }
-                ),
-                listOf(
-                    { onAction(CalculatorAction.Number(7)) },
-                    { onAction(CalculatorAction.Number(8)) },
-                    { onAction(CalculatorAction.Number(9)) },
-                    { onAction(CalculatorAction.Operation(CalculatorOperation.Multiply)) }
-                ),
-                listOf(
-                    { onAction(CalculatorAction.Number(4)) },
-                    { onAction(CalculatorAction.Number(5)) },
-                    { onAction(CalculatorAction.Number(6)) },
-                    { onAction(CalculatorAction.Operation(CalculatorOperation.Subtract)) }
-                ),
-                listOf(
-                    { onAction(CalculatorAction.Number(1)) },
-                    { onAction(CalculatorAction.Number(2)) },
-                    { onAction(CalculatorAction.Number(3)) },
-                    { onAction(CalculatorAction.Operation(CalculatorOperation.Add)) }
-                ),
-                listOf(
-                    { onAction(CalculatorAction.ToggleSign) },
-                    { onAction(CalculatorAction.Number(0)) },
-                    { onAction(CalculatorAction.Decimal) },
-                    { onAction(CalculatorAction.Calculate) }
-                )
-            )
-            for (row in 0 until buttonRows) {
+
+            numberRows.forEach { row ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(buttonSpacing)
                 ) {
-                    for (col in 0 until buttonCols) {
-                        val label = buttons.getOrNull(row)?.getOrNull(col) ?: ""
-                        val action = actions.getOrNull(row)?.getOrNull(col) ?: {}
-                        val color = when (label) {
-                            "C" -> MaterialTheme.colorScheme.surfaceVariant
-                            "%", "/", "x", "-", "+", "=" -> MaterialTheme.colorScheme.primary
-                            else -> MaterialTheme.colorScheme.surfaceVariant
-                        }
-                        if (label.isNotEmpty()) {
-                            CalculatorButton(
-                                symbol = label,
-                                modifier = Modifier
-                                    .aspectRatio(1f)
-                                    .weight(1f)
-                                    .background(color),
-                                onClick = action
-                            )
-                        } else {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
+                    row.forEach { number ->
+                        CalculatorButton(
+                            symbol = number,
+                            modifier = Modifier
+                                .weight(1f)
+                                .aspectRatio(1f)
+                                .background(Color(0xFF333333), CircleShape),
+                            textColor = Color.White,
+                            onClick = { onAction(CalculatorAction.Number(number.toInt())) }
+                        )
                     }
+                    // Operation button at the end of each row
+                    val operation = when (row[0]) {
+                        "7" -> CalculatorOperation.Multiply
+                        "4" -> CalculatorOperation.Subtract
+                        else -> CalculatorOperation.Add
+                    }
+                    CalculatorButton(
+                        symbol = operation.symbol,
+                        modifier = Modifier
+                            .weight(1f)
+                            .aspectRatio(1f)
+                            .background(Color(0xFFFF9F0A), CircleShape),
+                        textColor = Color.White,
+                        onClick = { onAction(CalculatorAction.Operation(operation)) }
+                    )
                 }
             }
+
+            // Bottom row: 0, ., =
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(buttonSpacing)
+            ) {
+                // Zero button (wider)
+                CalculatorButton(
+                    symbol = "0",
+                    modifier = Modifier
+                        .weight(2f)
+                        .aspectRatio(2f, false)
+                        .background(Color(0xFF333333), CircleShape),
+                    textColor = Color.White,
+                    onClick = { onAction(CalculatorAction.Number(0)) }
+                )
+                // Decimal point
+                CalculatorButton(
+                    symbol = ".",
+                    modifier = Modifier
+                        .weight(1f)
+                        .aspectRatio(1f)
+                        .background(Color(0xFF333333), CircleShape),
+                    textColor = Color.White,
+                    onClick = { onAction(CalculatorAction.Decimal) }
+                )
+                // Equals button
+                CalculatorButton(
+                    symbol = "=",
+                    modifier = Modifier
+                        .weight(1f)
+                        .aspectRatio(1f)
+                        .background(Color(0xFFFF9F0A), CircleShape),
+                    textColor = Color.White,
+                    onClick = { onAction(CalculatorAction.Calculate) }
+                )
+            }
         }
+    }
+}
+
+@Composable
+fun CalculatorButton(
+    symbol: String,
+    modifier: Modifier = Modifier,
+    textColor: Color = Color.White,
+    onClick: () -> Unit
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .clip(CircleShape)
+            .clickable { onClick() }
+    ) {
+        Text(
+            text = symbol,
+            color = textColor,
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Normal
+        )
     }
 }
