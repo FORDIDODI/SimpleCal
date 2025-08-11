@@ -25,13 +25,15 @@ fun CalculatorScientificLayout(
     onToggleMode: () -> Unit,
     viewModel: CalculatorViewModel
 ) {
-    // Delegate to CalculatorBasicLayout since we're now handling the scientific panel there
-    CalculatorBasicLayout(
+    Calculator(
         state = state,
         history = history,
         onAction = onAction,
-        onToggleMode = onToggleMode,
-        viewModel = viewModel
+        buttonSpacing = 4.dp,
+        modifier = Modifier.fillMaxSize(),
+        viewModel = viewModel,
+        onToggleScientific = onToggleMode,
+        isScientificMode = true // Always true for the scientific layout
     )
 }
 
