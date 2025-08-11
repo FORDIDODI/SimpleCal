@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.simplecal.ui.theme.AppTheme
 import com.example.simplecal.ui.theme.ThemeMode
@@ -33,6 +34,7 @@ class MainActivity : ComponentActivity() {
                 val state = viewModel.state
                 val history = viewModel.history.collectAsState(initial = emptyList())
                 val isScientificMode = viewModel.isScientificMode
+                val configuration = LocalConfiguration.current
 
                 if (isScientificMode) {
                     CalculatorScientificLayout(
