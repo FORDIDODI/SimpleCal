@@ -44,9 +44,8 @@ fun CalculatorBasicLayout(
     val navigationBarHeight = WindowInsets.navigationBars.getBottom(LocalDensity.current)
     val bottomPadding = with(LocalDensity.current) { navigationBarHeight.toDp() }
     var showScientific by remember { mutableStateOf(false) }
-    
-    val scientificFunctions = listOf(
-        // First column
+
+    val scientificFunctions: List<ScientificFunction> = listOf(
         ScientificFunction("sin", CalculatorAction.Sin, "Sine"),
         ScientificFunction("cos", CalculatorAction.Cos, "Cosine"),
         ScientificFunction("tan", CalculatorAction.Tan, "Tangent"),
@@ -55,8 +54,7 @@ fun CalculatorBasicLayout(
         ScientificFunction("x²", CalculatorAction.Square, "Square"),
         ScientificFunction("x³", CalculatorAction.Cube, "Cube"),
         ScientificFunction("√", CalculatorAction.Sqrt, "Square Root"),
-        
-        // Second column
+
         ScientificFunction("xʸ", CalculatorAction.Power, "Power"),
         ScientificFunction("1/x", CalculatorAction.Reciprocal, "Reciprocal"),
         ScientificFunction("x!", CalculatorAction.Factorial, "Factorial"),
@@ -66,14 +64,14 @@ fun CalculatorBasicLayout(
         ScientificFunction(")", CalculatorAction.CloseParenthesis, "Close Parenthesis"),
         ScientificFunction("±", CalculatorAction.ToggleSign, "Toggle Sign")
     )
-    
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MediumGray)
             .windowInsetsPadding(WindowInsets.navigationBars)
     ) {
-        // Main calculator (takes full width when scientific panel is hidden)
+        // Main calculator
         Box(
             modifier = Modifier
                 .fillMaxWidth(if (showScientific) 0.7f else 1f)
@@ -92,7 +90,7 @@ fun CalculatorBasicLayout(
             )
         }
 
-        // Scientific functions panel (appears on the right when shown)
+        // Scientific panel
         if (showScientific) {
             Column(
                 modifier = Modifier
@@ -108,7 +106,6 @@ fun CalculatorBasicLayout(
                     )
                     .padding(8.dp)
             ) {
-                // Toggle button at the top right
                 IconButton(
                     onClick = { showScientific = false },
                     modifier = Modifier
@@ -122,8 +119,7 @@ fun CalculatorBasicLayout(
                         tint = Color.White
                     )
                 }
-                
-                // Scientific functions list (1 button per row)
+
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -131,7 +127,7 @@ fun CalculatorBasicLayout(
                         .padding(horizontal = 4.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    items(scientificFunctions) { function ->
+                    items(scientificFunctions) { function: ScientificFunction ->
                         ScientificButton(
                             symbol = function.symbol,
                             modifier = Modifier
@@ -144,7 +140,6 @@ fun CalculatorBasicLayout(
             }
         }
 
-        // Toggle button at bottom right when scientific panel is hidden
         if (!showScientific) {
             IconButton(
                 onClick = { showScientific = true },
@@ -161,8 +156,7 @@ fun CalculatorBasicLayout(
                 )
             }
         }
-        
-        // Add minimal bottom padding for navigation bar
+
         Spacer(
             modifier = Modifier
                 .height(if (bottomPadding > 0.dp) 8.dp else 0.dp)

@@ -23,7 +23,7 @@ fun ScientificButton(
 ) {
     val buttonColor = Color.DarkGray
     val textColor = MaterialTheme.colorScheme.onPrimaryContainer
-    
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier

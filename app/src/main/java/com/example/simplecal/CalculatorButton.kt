@@ -23,12 +23,8 @@ fun CalculatorButton(
     isDeleteButton: Boolean = false,
     onClick: () -> Unit
 ) {
-    val textColor = if (isDeleteButton) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        MaterialTheme.colorScheme.onSurface
-    }
-    
+    val textColor = MaterialTheme.colorScheme.onSurface
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier

@@ -13,7 +13,7 @@ sealed class CalculatorAction {
     object ClearHistory: CalculatorAction()
     data class LoadFromHistory(val entry: String) : CalculatorAction()
 
-    //Tambahan buat scientific part nya
+    // Scientific
     object Sqrt: CalculatorAction()
     object Square: CalculatorAction()
     object Cube: CalculatorAction()

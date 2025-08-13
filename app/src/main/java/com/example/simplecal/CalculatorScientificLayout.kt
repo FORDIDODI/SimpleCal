@@ -1,21 +1,6 @@
 package com.example.simplecal
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Calculate
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.Composable
 
 @Composable
 fun CalculatorScientificLayout(
@@ -25,7 +10,7 @@ fun CalculatorScientificLayout(
     onToggleMode: () -> Unit,
     viewModel: CalculatorViewModel
 ) {
-    // Delegate to CalculatorBasicLayout since we're now handling the scientific panel there
+    // Tetap delegasi ke basic layout (panel scientific sudah ada di sana)
     CalculatorBasicLayout(
         state = state,
         history = history,
@@ -35,7 +20,7 @@ fun CalculatorScientificLayout(
     )
 }
 
-// Data class for scientific function buttons
+// Data class untuk daftar tombol scientific (DIPERTAHANKAN agar tidak error)
 data class ScientificFunction(
     val symbol: String,
     val action: CalculatorAction,

@@ -82,21 +82,13 @@ fun Calculator(
     val themeState = LocalTheme.current
     var showThemeMenu by remember { mutableStateOf(false) }
     var isHistoryExpanded by remember { mutableStateOf(false) }
-    
-    // Clear history function
-    val clearHistory = {
-        // We'll add a ClearHistory action to the ViewModel
-        onAction(CalculatorAction.ClearHistory)
-    }
-    
-    Column(
-        modifier = modifier.fillMaxSize()
-    ) {
-        // Top App Bar with Theme Toggle
+
+    val clearHistory = { onAction(CalculatorAction.ClearHistory) }
+
+    Column(modifier = modifier.fillMaxSize()) {
         TopAppBar(
             title = { Text("Calculator") },
             actions = {
-                // Theme Toggle Button
                 Box {
                     IconButton(onClick = { showThemeMenu = !showThemeMenu }) {
                         Icon(
@@ -108,55 +100,27 @@ fun Calculator(
                             contentDescription = "Toggle Theme"
                         )
                     }
-                    
-                    // Theme Selection Dropdown
                     DropdownMenu(
                         expanded = showThemeMenu,
                         onDismissRequest = { showThemeMenu = false }
                     ) {
                         DropdownMenuItem(
                             text = { Text("Light") },
-                            onClick = {
-                                themeState.updateTheme(ThemeMode.LIGHT)
-                                showThemeMenu = false
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Filled.LightMode,
-                                    contentDescription = null
-                                )
-                            }
+                            onClick = { themeState.updateTheme(ThemeMode.LIGHT); showThemeMenu = false },
+                            leadingIcon = { Icon(Icons.Filled.LightMode, contentDescription = null) }
                         )
                         DropdownMenuItem(
                             text = { Text("Dark") },
-                            onClick = {
-                                themeState.updateTheme(ThemeMode.DARK)
-                                showThemeMenu = false
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Filled.DarkMode,
-                                    contentDescription = null
-                                )
-                            }
+                            onClick = { themeState.updateTheme(ThemeMode.DARK); showThemeMenu = false },
+                            leadingIcon = { Icon(Icons.Filled.DarkMode, contentDescription = null) }
                         )
                         DropdownMenuItem(
                             text = { Text("System Default") },
-                            onClick = {
-                                themeState.updateTheme(ThemeMode.SYSTEM)
-                                showThemeMenu = false
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Filled.Settings,
-                                    contentDescription = null
-                                )
-                            }
+                            onClick = { themeState.updateTheme(ThemeMode.SYSTEM); showThemeMenu = false },
+                            leadingIcon = { Icon(Icons.Filled.Settings, contentDescription = null) }
                         )
                     }
                 }
-                
-                // Scientific Mode Toggle
                 IconButton(onClick = onToggleScientific) {
                     Icon(
                         imageVector = if (isScientificMode) Icons.Filled.KeyboardReturn else Icons.Filled.Functions,
@@ -165,10 +129,9 @@ fun Calculator(
                 }
             }
         )
-        
+
         Column(
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(buttonSpacing)
         ) {
@@ -179,11 +142,7 @@ fun Calculator(
                     .weight(if (isHistoryExpanded) 0.7f else 0.3f)
                     .padding(horizontal = 8.dp)
             ) {
-                // History header with clear button
-                Box(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    // Left side: History title and expand/collapse button
+                Box(modifier = Modifier.fillMaxWidth()) {
                     Row(
                         modifier = Modifier.align(Alignment.CenterStart),
                         verticalAlignment = Alignment.CenterVertically
@@ -193,8 +152,6 @@ fun Calculator(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 16.sp
                         )
-                        
-                        // Expand/Collapse button
                         IconButton(
                             onClick = { isHistoryExpanded = !isHistoryExpanded },
                             modifier = Modifier.size(24.dp)
@@ -207,8 +164,6 @@ fun Calculator(
                             )
                         }
                     }
-                    
-                    // Right side: Clear history button
                     IconButton(
                         onClick = clearHistory,
                         modifier = Modifier
@@ -223,27 +178,20 @@ fun Calculator(
                         )
                     }
                 }
-                
-                // History list
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
                     reverseLayout = true
                 ) {
-                    items(history) { entry ->
-                        // Split the entry into expression and result
+                    items(history) { entry: String ->
                         val parts = entry.split(" = ")
                         val expression = parts.getOrNull(0) ?: ""
                         val result = parts.getOrNull(1) ?: ""
-                        
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
-                                    // When clicked, load the result into the input
-                                    onAction(CalculatorAction.LoadFromHistory(entry))
-                                }
+                                .clickable { onAction(CalculatorAction.LoadFromHistory(entry)) }
                                 .padding(vertical = 4.dp)
                         ) {
                             if (expression.isNotEmpty()) {
@@ -267,17 +215,17 @@ fun Calculator(
                 }
             }
 
-            // Main input field
+            // Input
             val focusRequester = remember { FocusRequester() }
             val textFieldValue = remember { mutableStateOf(TextFieldValue("")) }
-            
+
             LaunchedEffect(state.number1 + (state.operation?.symbol ?: "") + state.number2) {
                 textFieldValue.value = TextFieldValue(
                     text = state.number1 + (state.operation?.symbol ?: "") + state.number2,
                     selection = TextRange(textFieldValue.value.text.length)
                 )
             }
-            
+
             BasicTextField(
                 value = textFieldValue.value,
                 onValueChange = { newValue ->
@@ -299,14 +247,13 @@ fun Calculator(
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
             )
 
-            // Toggle and Delete buttons row
+            // Toggle & Delete row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 8.dp, vertical = 2.dp),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Scientific Toggle Button
                 Box(
                     modifier = Modifier
                         .size(48.dp)
@@ -326,7 +273,6 @@ fun Calculator(
                     )
                 }
 
-                // Delete button
                 Box(
                     modifier = Modifier
                         .size(48.dp)
@@ -348,7 +294,7 @@ fun Calculator(
                 }
             }
 
-            // Calculator buttons grid
+            // Buttons
             val configuration = LocalConfiguration.current
             val isPortrait = configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT
             val buttonRows = if (isPortrait) 5 else 4

@@ -4,37 +4,31 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.simplecal.ui.theme.AppTheme
 import com.example.simplecal.ui.theme.ThemeMode
 import com.example.simplecal.ui.theme.rememberThemeState
-import net.objecthunter.exp4j.ExpressionBuilder
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
+
         setContent {
             val viewModel = viewModel<CalculatorViewModel>()
             val themeMode by viewModel.themeMode.collectAsState(initial = ThemeMode.SYSTEM)
-            
+
             val themeState = rememberThemeState(
                 initialTheme = themeMode,
-                onThemeUpdated = { newTheme ->
-                    viewModel.updateTheme(newTheme)
-                }
+                onThemeUpdated = { newTheme -> viewModel.updateTheme(newTheme) }
             )
-            
+
             AppTheme(themeState = themeState) {
                 val state = viewModel.state
                 val history = viewModel.history.collectAsState(initial = emptyList())
                 val isScientificMode = viewModel.isScientificMode
-                val configuration = LocalConfiguration.current
 
                 if (isScientificMode) {
                     CalculatorScientificLayout(
@@ -56,14 +50,4 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
-
-fun evaluateExpression(expression: String): Double {
-    return ExpressionBuilder(expression).build().evaluate()
-}
-
-fun evaluateSimpleExpression(expr: String): Double {
-    return ExpressionBuilder(expr)
-        .build()
-        .evaluate()
 }
