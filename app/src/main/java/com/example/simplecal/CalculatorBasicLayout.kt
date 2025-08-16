@@ -33,7 +33,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.example.simplecal.ui.theme.MediumGray
 
-
 @Composable
 fun CalculatorBasicLayout(
     state: CalculatorState,
@@ -141,22 +140,22 @@ fun CalculatorBasicLayout(
             }
         }
 
-//        if (!showScientific) {
-//            IconButton(
-//                onClick = { showScientific = true },
-//                modifier = Modifier
-//                    .size(56.dp)
-//                    .padding(16.dp)
-//                    .align(Alignment.BottomEnd)
-//            ) {
-//                Icon(
-//                    imageVector = Icons.Filled.Straighten,
-//                    contentDescription = "Show Scientific",
-//                    tint = Color.White,
-//                    modifier = Modifier.size(32.dp)
-//                )
-//            }
-//        }
+        if (!showScientific) {
+            IconButton(
+                onClick = { showScientific = true },
+                modifier = Modifier
+                    .size(56.dp)
+                    .padding(16.dp)
+                    .align(Alignment.BottomEnd)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Straighten,
+                    contentDescription = "Show Scientific",
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+        }
 
         Spacer(
             modifier = Modifier
